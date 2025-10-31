@@ -42,7 +42,7 @@ const StripePaymentModal = ({ isOpen, onClose, onSuccess }) => {
 
   const handleQuickAdd = async (amount) => {
     if (paymentProcessed) {
-      console.log('🛑 Payment already processed, skipping duplicate call')
+      console.log("Payment already processed, skipping duplicate call");
       return
     }
 
@@ -52,7 +52,7 @@ const StripePaymentModal = ({ isOpen, onClose, onSuccess }) => {
       setPaymentProcessed(true)
       const token = localStorage.getItem('token')
       
-      console.log(`💰 Quick adding ₹${amount}...`)
+      console.log(` Quick adding ₹${amount}...`);
       
       const response = await axios.post('http://localhost:3002/api/payments/quick-add', 
         { amount },
@@ -64,7 +64,7 @@ const StripePaymentModal = ({ isOpen, onClose, onSuccess }) => {
         }
       )
 
-      console.log('✅ Quick add response:', response.data)
+      console.log(" Quick add response:", response.data);
 
       if (response.data.success) {
         setStep('success')
@@ -78,7 +78,7 @@ const StripePaymentModal = ({ isOpen, onClose, onSuccess }) => {
         throw new Error(response.data.message || 'Payment failed')
       }
     } catch (error) {
-      console.error('❌ Quick add error:', error)
+      console.error(" Quick add error:", error);
       setPaymentProcessed(false)
       
       let errorMessage = 'Payment failed. Please try again.'
@@ -117,11 +117,11 @@ const StripePaymentModal = ({ isOpen, onClose, onSuccess }) => {
     e.stopPropagation()
     
     if (loading || paymentProcessed) {
-      console.log('🛑 Payment already in progress, ignoring click')
+      console.log("Payment already in progress, ignoring click");
       return
     }
 
-    console.log('🔄 Starting payment process...')
+    console.log("Starting payment process...");
     await handleQuickAdd(amount)
   }
 
@@ -447,19 +447,19 @@ export default function Account() {
         axios.get('http://localhost:3002/api/payments/balance', {
           headers: { Authorization: `Bearer ${token}` }
         }).catch(error => {
-          console.error('❌ Balance API error:', error)
+          console.error(" Balance API error:", error);
           throw error
         }),
         axios.get('http://localhost:3002/api/transactions', {
           headers: { Authorization: `Bearer ${token}` }
         }).catch(error => {
-          console.error('❌ Transactions API error:', error)
+          console.error("Transactions API error:", error);
           throw error
         })
       ])
 
-      console.log('💰 Balance response:', balanceRes.data)
-      console.log('📊 Transactions response:', transactionsRes.data)
+      console.log(" Balance response:", balanceRes.data);
+      console.log(" Transactions response:", transactionsRes.data);
 
       if (balanceRes.data.success) {
         setBalance(balanceRes.data)
@@ -474,7 +474,7 @@ export default function Account() {
       }
 
     } catch (error) {
-      console.error('❌ Error fetching account data:', error)
+      console.error(" Error fetching account data:", error);
       
       if (error.response) {
         console.error('Response status:', error.response.status)
@@ -500,7 +500,7 @@ export default function Account() {
 
   const handleAddFunds = async (amount) => {
     try {
-      console.log(`🔄 Refreshing balance after adding ₹${amount}...`)
+      console.log(` Refreshing balance after adding ₹${amount}...`);
       await fetchAccountData()
     } catch (error) {
       console.error('Error refreshing balance:', error)
@@ -516,7 +516,7 @@ export default function Account() {
         return
       }
 
-      console.log('📤 Exporting transactions to CSV...')
+      console.log(" Exporting transactions to CSV...");
 
       const response = await axios.get('http://localhost:3002/api/transactions/export/csv', {
         headers: { 
@@ -538,10 +538,10 @@ export default function Account() {
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
 
-      console.log('✅ CSV export completed')
+      console.log(" CSV export completed");
 
     } catch (error) {
-      console.error('❌ CSV export error:', error)
+      console.error(" CSV export error:", error);
       
       if (error.response?.status === 404) {
         alert('Export feature not available yet. Please check back later.')
