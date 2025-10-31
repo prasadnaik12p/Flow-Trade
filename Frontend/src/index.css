@@ -1,0 +1,40 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Prosto+One&display=swap');
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+}
+
+@layer utilities {
+  .font-thin { font-variation-settings: 'wght' 200; }
+  .font-extralight { font-variation-settings: 'wght' 300; }
+  .font-light { font-variation-settings: 'wght' 400; }
+  .font-normal { font-variation-settings: 'wght' 500; }
+  .font-medium { font-variation-settings: 'wght' 600; }
+  .font-semibold { font-variation-settings: 'wght' 700; }
+  .font-bold { font-variation-settings: 'wght' 800; }
+}
+
+@layer utilities {
+  /* Custom scrollbar styling */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+}
