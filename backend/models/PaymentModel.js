@@ -1,5 +1,5 @@
 const { model } = require('mongoose');
-const { PaymentSchema } = require('../schemas/PaymentSchema');
+const { PaymentSchema } = require("../schemas/paymentSchema");
 
 const Payment = new model('Payment', PaymentSchema);
 
