@@ -5,16 +5,31 @@ const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 
+// Create SendGrid transporter
+const createTransporter = () => {
+  return nodemailer.createTransport({
+    host: 'smtp.sendgrid.net',
+    port: 587,
+    auth: {
+      user: 'apikey',
+      pass: process.env.SENDGRID_API_KEY 
+    },
+    connectionTimeout: 10000,
+    socketTimeout: 10000
+  });
+};
+
 module.exports.Signup = async (req, res) => {
   try {
     const { email, username, password } = req.body;
 
-    console.log("Signup attempt for:", email);
+    console.log(" Signup attempt for:", email);
 
     if (!email || !username || !password) {
-      return res
-        .status(400)
-        .json({ message: "All fields are required", success: false });
+      return res.status(400).json({
+        message: "All fields are required",
+        success: false,
+      });
     }
 
     // Validate email format
@@ -28,17 +43,19 @@ module.exports.Signup = async (req, res) => {
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ message: "Email already in use", success: false });
+      return res.status(400).json({
+        message: "Email already in use",
+        success: false,
+      });
     }
 
     // Check existing username
     const existingUsername = await User.findOne({ username });
     if (existingUsername) {
-      return res
-        .status(400)
-        .json({ message: "Username already taken", success: false });
+      return res.status(400).json({
+        message: "Username already taken",
+        success: false,
+      });
     }
 
     const user = new User({ email, username, password });
@@ -52,28 +69,18 @@ module.exports.Signup = async (req, res) => {
     user.emailVerificationExpires = Date.now() + 60 * 60 * 1000; // 1 hour
 
     await user.save();
-    console.log("✅ User saved successfully");
+    console.log("User saved successfully");
 
-    // Send verification email
+    // Send verification email with SendGrid
     const frontendURL = process.env.FRONTEND_URL || "http://localhost:5173";
     const verificationURL = `${frontendURL}/verify-email/${verificationToken}`;
 
-    console.log("📧 Setting up email transporter...");
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465, // SSL port
-      secure: true, // true for 465
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-      connectionTimeout: 30000, // 30 seconds
-      socketTimeout: 30000,
-    });
+    console.log(" Setting up SendGrid transporter...");
+    const transporter = createTransporter();
 
-    console.log("📤 Sending verification email...");
+    console.log(" Sending verification email via SendGrid...");
     await transporter.sendMail({
-      from: `Flow Trade <${process.env.EMAIL_USER}>`,
+      from: process.env.EMAIL_FROM || "flowtrade181@gmail.com",
       to: email,
       subject: "Verify your Flow Trade email",
       html: `
@@ -92,7 +99,7 @@ module.exports.Signup = async (req, res) => {
       `,
     });
 
-    console.log("✅ Verification email sent successfully");
+    console.log(" Verification email sent successfully via SendGrid");
 
     res.status(201).json({
       message:
@@ -103,7 +110,11 @@ module.exports.Signup = async (req, res) => {
     console.error(" SIGNUP ERROR:", error.message);
 
     // If email fails, still return success but log the error
-    if (error.message.includes("email") || error.code === "ETIMEDOUT") {
+    if (
+      error.message.includes("email") ||
+      error.code === "ETIMEDOUT" ||
+      error.code === "EAUTH"
+    ) {
       console.log(" Email failed but account was created");
       return res.status(201).json({
         message:
@@ -177,16 +188,18 @@ module.exports.Login = async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "All fields are required", success: false });
+      return res.status(400).json({
+        message: "All fields are required",
+        success: false,
+      });
     }
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res
-        .status(401)
-        .json({ message: "Incorrect email or password", success: false });
+      return res.status(401).json({
+        message: "Incorrect email or password",
+        success: false,
+      });
     }
 
     if (!user.emailVerified) {
@@ -198,9 +211,10 @@ module.exports.Login = async (req, res) => {
 
     const auth = await bcrypt.compare(password, user.password);
     if (!auth) {
-      return res
-        .status(401)
-        .json({ message: "Incorrect email or password", success: false });
+      return res.status(401).json({
+        message: "Incorrect email or password",
+        success: false,
+      });
     }
 
     const token = createSecretToken(user._id);
@@ -235,26 +249,28 @@ module.exports.Logout = (req, res) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
     });
-    res
-      .status(200)
-      .json({ message: "User logged out successfully", success: true });
+    res.status(200).json({
+      message: "User logged out successfully",
+      success: true,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error", success: false });
   }
 };
 
-//Forget Password logic
+// Forget Password logic with SendGrid
 module.exports.ForgetPassword = async (req, res) => {
   const { email } = req.body;
 
   try {
-    console.log(" Forgot password request for:", email);
+    console.log("🔐 Forgot password request for:", email);
 
     if (!email) {
-      return res
-        .status(400)
-        .json({ message: "Email is required", success: false });
+      return res.status(400).json({
+        message: "Email is required",
+        success: false,
+      });
     }
 
     const user = await User.findOne({ email });
@@ -283,22 +299,13 @@ module.exports.ForgetPassword = async (req, res) => {
     const frontendURL = process.env.FRONTEND_URL || "http://localhost:5173";
     const resetURL = `${frontendURL}/reset-password/${resetToken}`;
 
-    console.log(" Setting up email transporter for password reset...");
-    // Send email using nodemailer
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465, // SSL port
-      secure: true, // true for 465
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-      connectionTimeout: 30000, // 30 seconds
-      socketTimeout: 30000,
-    });
+    console.log(" Setting up SendGrid transporter for password reset...");
+
+    // Send email using SendGrid
+    const transporter = createTransporter();
 
     const mailOptions = {
-      from: `Flow Trade <${process.env.EMAIL_USER}>`,
+      from: process.env.EMAIL_FROM || "flowtrade181@gmail.com",
       to: user.email,
       subject: "Password Reset Request - Flow Trade",
       html: `
@@ -317,19 +324,24 @@ module.exports.ForgetPassword = async (req, res) => {
       `,
     };
 
-    console.log(" Sending password reset email...");
+    console.log(" Sending password reset email via SendGrid...");
     await transporter.sendMail(mailOptions);
-    console.log(" Password reset email sent successfully");
+    console.log(" Password reset email sent successfully via SendGrid");
 
-    res
-      .status(200)
-      .json({ message: "Password reset link sent to email", success: true });
+    res.status(200).json({
+      message: "Password reset link sent to your email",
+      success: true,
+    });
   } catch (error) {
     console.error(" FORGOT PASSWORD ERROR:", error.message);
 
     // If email fails, still return success but log the error
-    if (error.message.includes("email") || error.code === "ETIMEDOUT") {
-      console.log(" Email failed but user was updated");
+    if (
+      error.message.includes("email") ||
+      error.code === "ETIMEDOUT" ||
+      error.code === "EAUTH"
+    ) {
+      console.log(" SendGrid email failed but user was updated");
       return res.status(200).json({
         message:
           "Password reset requested. If you don't receive an email, please try again later.",
@@ -338,7 +350,10 @@ module.exports.ForgetPassword = async (req, res) => {
       });
     }
 
-    res.status(500).json({ message: "Server error", success: false });
+    res.status(500).json({
+      message: "Server error during password reset",
+      success: false,
+    });
   }
 };
 
@@ -348,15 +363,17 @@ module.exports.ResetPassword = async (req, res) => {
     const { password, confirmPassword } = req.body;
 
     if (!password || !confirmPassword) {
-      return res
-        .status(400)
-        .json({ message: "Both password fields are required", success: false });
+      return res.status(400).json({
+        message: "Both password fields are required",
+        success: false,
+      });
     }
 
     if (password !== confirmPassword) {
-      return res
-        .status(400)
-        .json({ message: "Passwords do not match", success: false });
+      return res.status(400).json({
+        message: "Passwords do not match",
+        success: false,
+      });
     }
 
     // Hash the token from URL
@@ -369,9 +386,10 @@ module.exports.ResetPassword = async (req, res) => {
     });
 
     if (!user) {
-      return res
-        .status(400)
-        .json({ message: "Invalid or expired token", success: false });
+      return res.status(400).json({
+        message: "Invalid or expired token",
+        success: false,
+      });
     }
 
     user.password = password;
@@ -379,16 +397,17 @@ module.exports.ResetPassword = async (req, res) => {
     user.passwordResetExpires = undefined;
     await user.save();
 
-    res
-      .status(200)
-      .json({ message: "Password has been reset successfully", success: true });
+    res.status(200).json({
+      message: "Password has been reset successfully",
+      success: true,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error", success: false });
   }
 };
 
-// Resend verification email
+// Resend verification email with SendGrid
 module.exports.resendVerification = async (req, res) => {
   try {
     const { email } = req.body;
@@ -438,25 +457,15 @@ module.exports.resendVerification = async (req, res) => {
 
     await user.save();
 
-    // Send verification email
+    // Send verification email with SendGrid
     const frontendURL = process.env.FRONTEND_URL || "http://localhost:5173";
     const verificationURL = `${frontendURL}/verify-email/${verificationToken}`;
 
-    console.log(" Resending verification email...");
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465, // SSL port
-      secure: true, // true for 465
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-      connectionTimeout: 30000,
-      socketTimeout: 30000,
-    });
+    console.log(" Resending verification email via SendGrid...");
+    const transporter = createTransporter();
 
     await transporter.sendMail({
-      from: `Flow Trade <${process.env.EMAIL_USER}>`,
+      from: process.env.EMAIL_FROM || "flowtrade181@gmail.com",
       to: email,
       subject: "Verify your Flow Trade email - New Link",
       html: `
@@ -475,7 +484,7 @@ module.exports.resendVerification = async (req, res) => {
       `,
     });
 
-    console.log(" Resent verification email successfully");
+    console.log(" Resent verification email successfully via SendGrid");
 
     res.status(200).json({
       message: "Verification email sent successfully! Please check your email.",
@@ -485,7 +494,11 @@ module.exports.resendVerification = async (req, res) => {
     console.error("Resend verification error:", error);
 
     // If email fails, still return success
-    if (error.message.includes("email") || error.code === "ETIMEDOUT") {
+    if (
+      error.message.includes("email") ||
+      error.code === "ETIMEDOUT" ||
+      error.code === "EAUTH"
+    ) {
       return res.status(200).json({
         message:
           "Verification requested but email failed. Please try again later.",
@@ -500,5 +513,3 @@ module.exports.resendVerification = async (req, res) => {
     });
   }
 };
-
-
