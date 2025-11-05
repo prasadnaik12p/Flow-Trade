@@ -9,6 +9,8 @@ module.exports.Signup = async (req, res) => {
   try {
     const { email, username, password } = req.body;
 
+    console.log("Signup attempt for:", email);
+
     if (!email || !username || !password) {
       return res
         .status(400)
@@ -31,6 +33,14 @@ module.exports.Signup = async (req, res) => {
         .json({ message: "Email already in use", success: false });
     }
 
+    // Check existing username
+    const existingUsername = await User.findOne({ username });
+    if (existingUsername) {
+      return res
+        .status(400)
+        .json({ message: "Username already taken", success: false });
+    }
+
     const user = new User({ email, username, password });
 
     // Generate email verification token
@@ -42,34 +52,47 @@ module.exports.Signup = async (req, res) => {
     user.emailVerificationExpires = Date.now() + 60 * 60 * 1000; // 1 hour
 
     await user.save();
+    console.log("✅ User saved successfully");
 
     // Send verification email
-    const verificationURL = `http://localhost:5173/verify-email/${verificationToken}`;
+    const frontendURL = process.env.FRONTEND_URL || "http://localhost:5173";
+    const verificationURL = `${frontendURL}/verify-email/${verificationToken}`;
 
+    console.log("📧 Setting up email transporter...");
     const transporter = nodemailer.createTransport({
-      service: "Gmail",
+      host: "smtp.gmail.com",
+      port: 465, // SSL port
+      secure: true, // true for 465
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
+      connectionTimeout: 30000, // 30 seconds
+      socketTimeout: 30000,
     });
 
+    console.log("📤 Sending verification email...");
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: `Flow Trade <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Verify your Flow Trade email",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #f9f9f9;">
-          <h2 style="color: #333;">Hello ${username},</h2>
+          <h2 style="color: #333; text-align: center;">Welcome to Flow Trade! 🎉</h2>
+          <p style="font-size: 16px; color: #555;">Hello <strong>${username}</strong>,</p>
           <p style="font-size: 16px; color: #555;">Thank you for signing up for Flow Trade. Please verify your email by clicking the button below:</p>
-          <a href="${verificationURL}" style="display: inline-block; padding: 12px 25px; margin: 15px 0; font-size: 16px; color: white; background-color: #007BFF; text-decoration: none; border-radius: 5px;">Verify Email</a>
-          <p style="font-size: 14px; color: #888;">Or copy and paste this link in your browser:</p>
-          <p style="font-size: 12px; color: #666; background: #f0f0f0; padding: 10px; border-radius: 5px; word-break: break-all;">${verificationURL}</p>
-          <p style="font-size: 14px; color: #888;">This link will expire in 1 hour.</p>
-          <p style="font-size: 14px; color: #888;">If you did not create an account, please ignore this email.</p>
+          <div style="text-align: center; margin: 25px 0;">
+            <a href="${verificationURL}" style="display: inline-block; padding: 14px 30px; font-size: 16px; color: white; background-color: #007BFF; text-decoration: none; border-radius: 8px; font-weight: bold;">Verify Email Address</a>
+          </div>
+          <p style="font-size: 14px; color: #888; text-align: center;">Or copy and paste this link in your browser:</p>
+          <p style="font-size: 12px; color: #666; background: #f0f0f0; padding: 12px; border-radius: 5px; word-break: break-all; text-align: center;">${verificationURL}</p>
+          <p style="font-size: 14px; color: #888; text-align: center;">This link will expire in 1 hour.</p>
+          <p style="font-size: 14px; color: #888; text-align: center;">If you did not create an account, please ignore this email.</p>
         </div>
       `,
     });
+
+    console.log("✅ Verification email sent successfully");
 
     res.status(201).json({
       message:
@@ -77,7 +100,19 @@ module.exports.Signup = async (req, res) => {
       success: true,
     });
   } catch (error) {
-   
+    console.error(" SIGNUP ERROR:", error.message);
+
+    // If email fails, still return success but log the error
+    if (error.message.includes("email") || error.code === "ETIMEDOUT") {
+      console.log(" Email failed but account was created");
+      return res.status(201).json({
+        message:
+          "Account created! But verification email failed. Please use 'Resend Verification' later.",
+        success: true,
+        emailSent: false,
+      });
+    }
+
     res.status(500).json({ message: "Server error", success: false });
   }
 };
@@ -103,14 +138,12 @@ module.exports.verifyEmail = async (req, res) => {
     });
 
     if (!user) {
-
       // Check if token exists but expired
       const expiredUser = await User.findOne({
         emailVerificationToken: hashedToken,
       });
 
       if (expiredUser) {
-       
         return res.status(400).json({
           message:
             "Verification link has expired. Please request a new verification email.",
@@ -135,6 +168,7 @@ module.exports.verifyEmail = async (req, res) => {
       success: true,
     });
   } catch (error) {
+    console.error("Verify email error:", error);
     res.status(500).json({ message: "Server error", success: false });
   }
 };
@@ -188,7 +222,7 @@ module.exports.Login = async (req, res) => {
       token,
     });
   } catch (error) {
-    // console.error(error);
+    console.error("Login error:", error);
     res.status(500).json({ message: "Server error", success: false });
   }
 };
@@ -215,6 +249,8 @@ module.exports.ForgetPassword = async (req, res) => {
   const { email } = req.body;
 
   try {
+    console.log(" Forgot password request for:", email);
+
     if (!email) {
       return res
         .status(400)
@@ -223,15 +259,16 @@ module.exports.ForgetPassword = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res
-        .status(404)
-        .json({ message: "User not found", success: false });
+      console.log("User not found, but returning success for security");
+      return res.status(200).json({
+        message:
+          "If an account with that email exists, a reset link has been sent.",
+        success: true,
+      });
     }
 
     // Generate a reset token
     const resetToken = crypto.randomBytes(32).toString("hex");
-
-    // Hash the token
     const hashedToken = crypto
       .createHash("sha256")
       .update(resetToken)
@@ -246,52 +283,61 @@ module.exports.ForgetPassword = async (req, res) => {
     const frontendURL = process.env.FRONTEND_URL || "http://localhost:5173";
     const resetURL = `${frontendURL}/reset-password/${resetToken}`;
 
+    console.log(" Setting up email transporter for password reset...");
     // Send email using nodemailer
     const transporter = nodemailer.createTransport({
-      service: "Gmail",
+      host: "smtp.gmail.com",
+      port: 465, // SSL port
+      secure: true, // true for 465
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
+      connectionTimeout: 30000, // 30 seconds
+      socketTimeout: 30000,
     });
 
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: `Flow Trade <${process.env.EMAIL_USER}>`,
       to: user.email,
-      subject: "Password Reset Request",
+      subject: "Password Reset Request - Flow Trade",
       html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #f9f9f9;">
-              <h2 style="color: #333;">Hello ${user.username},</h2>
-              <p style="font-size: 16px; color: #555;">
-                You requested a password reset for your Flow Trade account.
-              </p>
-              <p style="font-size: 16px; color: #555;">
-                Click the button below to reset your password:
-              </p>
-              <a href="${resetURL}" style="display: inline-block; padding: 12px 25px; margin: 15px 0; font-size: 16px; color: white; background-color: #007BFF; text-decoration: none; border-radius: 5px;">
-                Reset Password
-              </a>
-              <p style="font-size: 14px; color: #888;">
-                This link will expire in 1 hour.
-              </p>
-              <p style="font-size: 14px; color: #888;">
-                If you did not request a password reset, you can safely ignore this email.
-              </p>
-              <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
-              <p style="font-size: 12px; color: #aaa;">
-                Donor Connect Team
-              </p>
-            </div>
-          `,
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #f9f9f9;">
+          <h2 style="color: #333; text-align: center;">Password Reset</h2>
+          <p style="font-size: 16px; color: #555;">Hello ${user.username},</p>
+          <p style="font-size: 16px; color: #555;">You requested a password reset for your Flow Trade account.</p>
+          <div style="text-align: center; margin: 25px 0;">
+            <a href="${resetURL}" style="display: inline-block; padding: 14px 30px; font-size: 16px; color: white; background-color: #007BFF; text-decoration: none; border-radius: 8px; font-weight: bold;">Reset Password</a>
+          </div>
+          <p style="font-size: 14px; color: #888; text-align: center;">Or copy and paste this link:</p>
+          <p style="font-size: 12px; color: #666; background: #f0f0f0; padding: 12px; border-radius: 5px; word-break: break-all; text-align: center;">${resetURL}</p>
+          <p style="font-size: 14px; color: #888; text-align: center;">This link expires in 1 hour.</p>
+          <p style="font-size: 14px; color: #888; text-align: center;">If you didn't request this, please ignore this email.</p>
+        </div>
+      `,
     };
 
+    console.log(" Sending password reset email...");
     await transporter.sendMail(mailOptions);
+    console.log(" Password reset email sent successfully");
 
     res
       .status(200)
       .json({ message: "Password reset link sent to email", success: true });
   } catch (error) {
-    console.error(error);
+    console.error(" FORGOT PASSWORD ERROR:", error.message);
+
+    // If email fails, still return success but log the error
+    if (error.message.includes("email") || error.code === "ETIMEDOUT") {
+      console.log(" Email failed but user was updated");
+      return res.status(200).json({
+        message:
+          "Password reset requested. If you don't receive an email, please try again later.",
+        success: true,
+        emailSent: false,
+      });
+    }
+
     res.status(500).json({ message: "Server error", success: false });
   }
 };
@@ -396,31 +442,40 @@ module.exports.resendVerification = async (req, res) => {
     const frontendURL = process.env.FRONTEND_URL || "http://localhost:5173";
     const verificationURL = `${frontendURL}/verify-email/${verificationToken}`;
 
+    console.log(" Resending verification email...");
     const transporter = nodemailer.createTransport({
-      service: "Gmail",
+      host: "smtp.gmail.com",
+      port: 465, // SSL port
+      secure: true, // true for 465
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
+      connectionTimeout: 30000,
+      socketTimeout: 30000,
     });
 
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: `Flow Trade <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Verify your Flow Trade email - New Link",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #f9f9f9;">
-          <h2 style="color: #333;">Hello ${user.username},</h2>
+          <h2 style="color: #333; text-align: center;">New Verification Link</h2>
+          <p style="font-size: 16px; color: #555;">Hello ${user.username},</p>
           <p style="font-size: 16px; color: #555;">You requested a new verification link for your Flow Trade account.</p>
-          <p style="font-size: 16px; color: #555;">Please verify your email by clicking the button below:</p>
-          <a href="${verificationURL}" style="display: inline-block; padding: 12px 25px; margin: 15px 0; font-size: 16px; color: white; background-color: #007BFF; text-decoration: none; border-radius: 5px;">Verify Email</a>
-          <p style="font-size: 14px; color: #888;">Or copy and paste this link in your browser:</p>
-          <p style="font-size: 12px; color: #666; background: #f0f0f0; padding: 10px; border-radius: 5px; word-break: break-all;">${verificationURL}</p>
-          <p style="font-size: 14px; color: #888;">This link will expire in 1 hour.</p>
-          <p style="font-size: 14px; color: #888;">If you did not request this, please ignore this email.</p>
+          <div style="text-align: center; margin: 25px 0;">
+            <a href="${verificationURL}" style="display: inline-block; padding: 14px 30px; font-size: 16px; color: white; background-color: #007BFF; text-decoration: none; border-radius: 8px; font-weight: bold;">Verify Email Address</a>
+          </div>
+          <p style="font-size: 14px; color: #888; text-align: center;">Or copy and paste this link in your browser:</p>
+          <p style="font-size: 12px; color: #666; background: #f0f0f0; padding: 12px; border-radius: 5px; word-break: break-all; text-align: center;">${verificationURL}</p>
+          <p style="font-size: 14px; color: #888; text-align: center;">This link will expire in 1 hour.</p>
+          <p style="font-size: 14px; color: #888; text-align: center;">If you did not request this, please ignore this email.</p>
         </div>
       `,
     });
+
+    console.log(" Resent verification email successfully");
 
     res.status(200).json({
       message: "Verification email sent successfully! Please check your email.",
@@ -428,9 +483,22 @@ module.exports.resendVerification = async (req, res) => {
     });
   } catch (error) {
     console.error("Resend verification error:", error);
+
+    // If email fails, still return success
+    if (error.message.includes("email") || error.code === "ETIMEDOUT") {
+      return res.status(200).json({
+        message:
+          "Verification requested but email failed. Please try again later.",
+        success: true,
+        emailSent: false,
+      });
+    }
+
     res.status(500).json({
       message: "Server error while sending verification email",
       success: false,
     });
   }
 };
+
+
