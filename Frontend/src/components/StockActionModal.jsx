@@ -172,7 +172,7 @@ const StockActionModal = ({ isOpen, onClose, stock, currentPrice }) => {
     };
 
     try {
-      const response = await axios.post("http://localhost:3002/dashboard/UserStock/buy", payload, {
+      const response = await axios.post("https://flow-trade.onrender.com/dashboard/UserStock/buy", payload, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'

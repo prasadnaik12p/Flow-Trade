@@ -158,13 +158,13 @@ export default function Overview() {
       }
 
       const [overviewRes, statsRes] = await Promise.all([
-        axios.get('http://localhost:3002/dashboard/Overview', {
+        axios.get('https://flow-trade.onrender.com/dashboard/Overview', {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         }),
-        axios.get('http://localhost:3002/dashboard/Overview/dashboard-stats', {
+        axios.get('https://flow-trade.onrender.com/dashboard/Overview/dashboard-stats', {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'

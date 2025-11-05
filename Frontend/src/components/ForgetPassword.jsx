@@ -17,7 +17,7 @@ export default function ForgotPassword() {
 
     try {
       const res = await axios.post(
-        "http://localhost:3002/auth/forget-password", 
+        "https://flow-trade.onrender.com/auth/forget-password", 
         { email }, 
         {
           headers: {

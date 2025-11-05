@@ -72,7 +72,7 @@ const Orders = () => {
       setIsRefreshing(true);
       
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3002/dashboard/Orders/', {
+      const response = await fetch('https://flow-trade.onrender.com/dashboard/Orders/', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

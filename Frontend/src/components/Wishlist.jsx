@@ -37,7 +37,7 @@ const Wishlist = () => {
   const fetchWatchlists = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3002/dashboard/Watchlists', {
+      const response = await axios.get('https://flow-trade.onrender.com/dashboard/Watchlists', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -54,7 +54,7 @@ const Wishlist = () => {
   const fetchAvailableStocks = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3002/dashboard/stocks', {
+      const response = await axios.get('https://flow-trade.onrender.com/dashboard/stocks', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -98,7 +98,7 @@ const Wishlist = () => {
       // Try batch API first
       try {
         const batchResponse = await axios.post(
-          'http://localhost:3002/dashboard/stock-prices',
+          'https://flow-trade.onrender.com/dashboard/stock-prices',
           { symbols: allSymbols },
           {
             headers: {
@@ -127,7 +127,7 @@ const Wishlist = () => {
             setStockPrices(newPrices);
             setAllPricesLoaded(true);
             setLoading(false);
-            console.log("🎉 All stock prices loaded successfully from batch API");
+            console.log(" All stock prices loaded successfully from batch API");
             return;
           }
         }
@@ -141,7 +141,7 @@ const Wishlist = () => {
       for (const symbol of remainingSymbols) {
         try {
           const response = await axios.get(
-            `http://localhost:3002/dashboard/stock-price/${symbol}`,
+            `https://flow-trade.onrender.com/dashboard/stock-price/${symbol}`,
             {
               headers: {
                 'Authorization': `Bearer ${token}`,
@@ -216,7 +216,7 @@ const Wishlist = () => {
     setAddingItem(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:3002/dashboard/Watchlists/add', 
+      const response = await axios.post('https://flow-trade.onrender.com/dashboard/Watchlists/add', 
         { symbol: stock.symbol },
         {
           headers: {
@@ -241,7 +241,7 @@ const Wishlist = () => {
     setRemovingItem(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:3002/dashboard/Watchlists/remove', 
+      const response = await axios.post('https://flow-trade.onrender.com/dashboard/Watchlists/remove', 
         { symbol: watchlistItem.stockId.symbol },
         {
           headers: {
@@ -267,7 +267,7 @@ const Wishlist = () => {
       // Fetch the latest price before opening modal
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `http://localhost:3002/dashboard/stock-price/${stock.symbol}`,
+        `https://flow-trade.onrender.com/dashboard/stock-price/${stock.symbol}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,

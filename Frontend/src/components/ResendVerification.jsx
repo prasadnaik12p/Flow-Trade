@@ -34,7 +34,7 @@ export default function ResendVerification() {
 
     try {
       const res = await axios.post(
-        "http://localhost:3002/auth/resend-verification", 
+        "https://flow-trade.onrender.com/auth/resend-verification", 
         { email }, 
         {
           headers: {

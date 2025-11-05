@@ -15,7 +15,7 @@ export default function EmailVerification() {
         console.log(' Starting email verification...');
         console.log(' Token:', token);
         
-        const verificationURL = `http://localhost:3002/auth/verify-email/${token}`;
+        const verificationURL = `https://flow-trade.onrender.com/auth/verify-email/${token}`;
         console.log(' URL:', verificationURL);
         
         const res = await axios.get(verificationURL, {
@@ -51,7 +51,7 @@ export default function EmailVerification() {
               errorMessage.includes('Invalid verification link')) {
             
             // Token was already used but user might be verified
-            // Check if we should redirect to success or show error
+            
             setStatus('info');
             setMessage('Your email has already been verified. You can now login.');
             

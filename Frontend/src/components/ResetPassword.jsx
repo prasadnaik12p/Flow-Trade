@@ -48,7 +48,7 @@ export default function ResetPassword() {
 
     try {
       const res = await axios.post(
-        `http://localhost:3002/auth/reset-password/${token}`, 
+        `https://flow-trade.onrender.com/auth/reset-password/${token}`, 
         formData, 
         {
           headers: {

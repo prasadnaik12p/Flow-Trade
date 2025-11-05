@@ -73,7 +73,7 @@ const fetchPositions = async () => {
     
     // Use the CORRECT endpoint - your existing positions endpoint
     const timestamp = Date.now();
-    const response = await axios.get(`http://localhost:3002/dashboard/UserStock/Positions/?t=${timestamp}`, {
+    const response = await axios.get(`https://flow-trade.onrender.com/dashboard/UserStock/Positions/?t=${timestamp}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -142,7 +142,7 @@ const fetchPositions = async () => {
   const debugQuantity = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3002/dashboard/Positions/', {
+      const response = await axios.get('https://flow-trade.onrender.com/dashboard/Positions/', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -200,7 +200,7 @@ const fetchPositions = async () => {
 
       console.log(" Sending sell order:", sellOrder);
 
-      const response = await axios.post('http://localhost:3002/dashboard/UserStock/sell', sellOrder, {
+      const response = await axios.post('https://flow-trade.onrender.com/dashboard/UserStock/sell', sellOrder, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',

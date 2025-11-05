@@ -54,7 +54,7 @@ const StripePaymentModal = ({ isOpen, onClose, onSuccess }) => {
       
       console.log(` Quick adding ₹${amount}...`);
       
-      const response = await axios.post('http://localhost:3002/api/payments/quick-add', 
+      const response = await axios.post('https://flow-trade.onrender.com/api/payments/quick-add', 
         { amount },
         { 
           headers: { 
@@ -444,13 +444,13 @@ export default function Account() {
       console.log('🔍 Fetching account data...')
 
       const [balanceRes, transactionsRes] = await Promise.all([
-        axios.get('http://localhost:3002/api/payments/balance', {
+        axios.get('https://flow-trade.onrender.com/api/payments/balance', {
           headers: { Authorization: `Bearer ${token}` }
         }).catch(error => {
           console.error(" Balance API error:", error);
           throw error
         }),
-        axios.get('http://localhost:3002/api/transactions', {
+        axios.get('https://flow-trade.onrender.com/api/transactions', {
           headers: { Authorization: `Bearer ${token}` }
         }).catch(error => {
           console.error("Transactions API error:", error);
@@ -518,7 +518,7 @@ export default function Account() {
 
       console.log(" Exporting transactions to CSV...");
 
-      const response = await axios.get('http://localhost:3002/api/transactions/export/csv', {
+      const response = await axios.get('https://flow-trade.onrender.com/api/transactions/export/csv', {
         headers: { 
           Authorization: `Bearer ${token}` 
         },

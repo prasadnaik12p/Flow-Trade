@@ -9,13 +9,13 @@ import { motion } from "framer-motion";
 function Hero() {
   const navigate = useNavigate();
   
-  // Check if user is logged in
+  
   const isLoggedIn = () => {
     const token = localStorage.getItem('token');
     return token && token !== 'undefined' && token !== 'null';
   };
 
-  // Handle Start Trading button click
+
   const handleStartTrading = () => {
     if (isLoggedIn()) {
       navigate('/dashboard');
@@ -42,7 +42,7 @@ function Hero() {
     }
   };
 
-  // Animation variants (same as before)
+  // Animation variants 
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {

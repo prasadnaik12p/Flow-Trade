@@ -44,7 +44,7 @@ const Holdings = () => {
         return;
       }
 
-      const response = await axios.get('http://localhost:3002/dashboard/allHoldings', {
+      const response = await axios.get('https://flow-trade.onrender.com/dashboard/allHoldings', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -111,7 +111,7 @@ const executeSell = async () => {
 
     console.log("📤 Sending sell order:", sellOrder);
 
-    const response = await axios.post('http://localhost:3002/dashboard/UserStock/sell', sellOrder, {
+    const response = await axios.post('https://flow-trade.onrender.com/dashboard/UserStock/sell', sellOrder, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -131,7 +131,7 @@ const executeSell = async () => {
     setTimeout(() => setError(''), 3000);
 
   } catch (error) {
-    console.error('❌ Error selling position:', error);
+    console.error(' Error selling position:', error);
     setError(`Failed to sell position: ${error.response?.data?.error || error.response?.data?.message || error.message}`);
   }
 };

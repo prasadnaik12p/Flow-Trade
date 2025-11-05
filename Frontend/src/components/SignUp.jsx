@@ -36,7 +36,7 @@ export default function Signup({ onSignupSuccess }) {
 
     try {
       const res = await axios.post(
-        "http://localhost:3002/auth/signup", 
+        "https://flow-trade.onrender.com/auth/signup", 
         formData, 
         {
           headers: {

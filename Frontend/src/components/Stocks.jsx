@@ -151,7 +151,7 @@ const fetchStockPriceFromBackend = async (symbol) => {
   try {
     const token = localStorage.getItem("token");
     const response = await axios.get(
-      `http://localhost:3002/dashboard/stock-price/${symbol}`,
+      `https://flow-trade.onrender.com/dashboard/stock-price/${symbol}`,
       {
         headers: { 
           Authorization: `Bearer ${token}`,
@@ -182,7 +182,7 @@ const fetchMultipleStockPrices = async (symbols) => {
   try {
     const token = localStorage.getItem("token");
     const response = await axios.post(
-      `http://localhost:3002/dashboard/stock-prices`,
+      `https://flow-trade.onrender.com/dashboard/stock-prices`,
       { symbols },
       {
         headers: { 
@@ -270,7 +270,7 @@ function Stocks() {
         }
 
         // Fetch stocks data
-        const res = await axios.get("http://localhost:3002/dashboard/stocks", {
+        const res = await axios.get("https://flow-trade.onrender.com/dashboard/stocks", {
           headers: { 
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -405,7 +405,7 @@ function Stocks() {
     }
 
     axios.post(
-      "http://localhost:3002/dashboard/Watchlists/add",
+      "https://flow-trade.onrender.com/dashboard/Watchlists/add",
       { symbol: stock.symbol },
       { 
         headers: { 
