@@ -1,55 +1,43 @@
 const { User } = require("../models/UserModel");
 const { createSecretToken } = require("../utils/SecretToken");
 const bcrypt = require("bcryptjs");
-const nodemailer = require("nodemailer");
+const sgMail = require("@sendgrid/mail");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 
-// Create SendGrid transporter with optimized settings
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: "smtp.sendgrid.net",
-    port: 587,
-    secure: false,
-    auth: {
-      user: "apikey",
-      pass: process.env.SENDGRID_API_KEY,
-    },
-    connectionTimeout: 30000, // Increased timeout
-    socketTimeout: 30000,
-    greetingTimeout: 30000,
-    tls: {
-      rejectUnauthorized: false, // Important for cloud platforms
-    },
-  });
-};
+// Configure SendGrid
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-// Email sending with retry logic
-const sendEmailWithRetry = async (mailOptions, retries = 3) => {
-  for (let i = 0; i < retries; i++) {
-    try {
-      console.log(`📧 Email attempt ${i + 1}/${retries}`);
-      const transporter = createTransporter();
-      
-      // Test connection first
-      await transporter.verify();
-      console.log("✅ SMTP connection verified");
-      
-      // Send email
-      const result = await transporter.sendMail(mailOptions);
-      console.log("✅ Email sent successfully");
-      return { success: true, result };
-    } catch (error) {
-      console.error(`❌ Attempt ${i + 1} failed:`, error.message);
-      
-      if (i === retries - 1) {
-        return { success: false, error };
-      }
-      
-      // Wait 2 seconds before retry
-      console.log(`⏳ Retrying in 2 seconds...`);
-      await new Promise(resolve => setTimeout(resolve, 2000));
-    }
+// Email sending function using SendGrid Web API
+const sendEmailWithSendGrid = async (to, subject, html) => {
+  try {
+    console.log("Preparing to send email via SendGrid Web API...");
+    console.log("API Key present:", !!process.env.SENDGRID_API_KEY);
+    console.log("From email:", process.env.EMAIL_FROM);
+    console.log("To email:", to);
+
+    const msg = {
+      to: to,
+      from: process.env.EMAIL_FROM,
+      subject: subject,
+      html: html,
+    };
+
+    console.log("Sending email via SendGrid Web API...");
+    const result = await sgMail.send(msg);
+
+    console.log("Email sent successfully via SendGrid Web API");
+    console.log("Status:", result[0].statusCode);
+
+    return { success: true, result };
+  } catch (error) {
+    console.error("SendGrid Web API Error:", {
+      message: error.message,
+      code: error.code,
+      response: error.response ? error.response.body : "No response",
+    });
+
+    return { success: false, error };
   }
 };
 
@@ -57,9 +45,9 @@ module.exports.Signup = async (req, res) => {
   try {
     const { email, username, password } = req.body;
 
-    console.log("🚀 Signup attempt for:", email);
-    console.log("🔑 SENDGRID_API_KEY present:", !!process.env.SENDGRID_API_KEY);
-    console.log("📨 EMAIL_FROM:", process.env.EMAIL_FROM);
+    console.log("Signup attempt for:", email);
+    console.log("SENDGRID_API_KEY present:", !!process.env.SENDGRID_API_KEY);
+    console.log("EMAIL_FROM:", process.env.EMAIL_FROM);
 
     if (!email || !username || !password) {
       return res.status(400).json({
@@ -105,39 +93,35 @@ module.exports.Signup = async (req, res) => {
     user.emailVerificationExpires = Date.now() + 60 * 60 * 1000; // 1 hour
 
     await user.save();
-    console.log("✅ User saved successfully");
+    console.log("User saved successfully");
 
-    // Send verification email with SendGrid
+    // Send verification email with SendGrid Web API
     const frontendURL = process.env.FRONTEND_URL || "http://localhost:5173";
     const verificationURL = `${frontendURL}/verify-email/${verificationToken}`;
 
-    console.log("📧 Setting up verification email...");
-
-    const mailOptions = {
-      from: process.env.EMAIL_FROM || "flowtrade181@gmail.com",
-      to: email,
-      subject: "Verify your Flow Trade email",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #f9f9f9;">
-          <h2 style="color: #333; text-align: center;">Welcome to Flow Trade! 🎉</h2>
-          <p style="font-size: 16px; color: #555;">Hello <strong>${username}</strong>,</p>
-          <p style="font-size: 16px; color: #555;">Thank you for signing up for Flow Trade. Please verify your email by clicking the button below:</p>
-          <div style="text-align: center; margin: 25px 0;">
-            <a href="${verificationURL}" style="display: inline-block; padding: 14px 30px; font-size: 16px; color: white; background-color: #007BFF; text-decoration: none; border-radius: 8px; font-weight: bold;">Verify Email Address</a>
-          </div>
-          <p style="font-size: 14px; color: #888; text-align: center;">Or copy and paste this link in your browser:</p>
-          <p style="font-size: 12px; color: #666; background: #f0f0f0; padding: 12px; border-radius: 5px; word-break: break-all; text-align: center;">${verificationURL}</p>
-          <p style="font-size: 14px; color: #888; text-align: center;">This link will expire in 1 hour.</p>
-          <p style="font-size: 14px; color: #888; text-align: center;">If you did not create an account, please ignore this email.</p>
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #f9f9f9;">
+        <h2 style="color: #333; text-align: center;">Welcome to Flow Trade! 🎉</h2>
+        <p style="font-size: 16px; color: #555;">Hello <strong>${username}</strong>,</p>
+        <p style="font-size: 16px; color: #555;">Thank you for signing up for Flow Trade. Please verify your email by clicking the button below:</p>
+        <div style="text-align: center; margin: 25px 0;">
+          <a href="${verificationURL}" style="display: inline-block; padding: 14px 30px; font-size: 16px; color: white; background-color: #007BFF; text-decoration: none; border-radius: 8px; font-weight: bold;">Verify Email Address</a>
         </div>
-      `,
-    };
+        <p style="font-size: 14px; color: #888; text-align: center;">Or copy and paste this link in your browser:</p>
+        <p style="font-size: 12px; color: #666; background: #f0f0f0; padding: 12px; border-radius: 5px; word-break: break-all; text-align: center;">${verificationURL}</p>
+        <p style="font-size: 14px; color: #888; text-align: center;">This link will expire in 1 hour.</p>
+        <p style="font-size: 14px; color: #888; text-align: center;">If you did not create an account, please ignore this email.</p>
+      </div>
+    `;
 
-    console.log("🔄 Sending verification email with retry logic...");
-    const emailResult = await sendEmailWithRetry(mailOptions, 2);
+    const emailResult = await sendEmailWithSendGrid(
+      email,
+      "Verify your Flow Trade email",
+      emailHtml
+    );
 
     if (!emailResult.success) {
-      console.log("⚠️ Email failed but account was created");
+      console.log("Email failed but account was created");
       return res.status(201).json({
         message:
           "Account created! But verification email failed. Please use 'Resend Verification' later.",
@@ -146,7 +130,7 @@ module.exports.Signup = async (req, res) => {
       });
     }
 
-    console.log("✅ Verification email sent successfully via SendGrid");
+    console.log("Verification email sent successfully via SendGrid Web API");
 
     res.status(201).json({
       message:
@@ -154,15 +138,10 @@ module.exports.Signup = async (req, res) => {
       success: true,
     });
   } catch (error) {
-    console.error("❌ SIGNUP ERROR:", error.message);
+    console.error("SIGNUP ERROR:", error.message);
 
-    // If email fails, still return success but log the error
-    if (
-      error.message.includes("email") ||
-      error.code === "ETIMEDOUT" ||
-      error.code === "EAUTH"
-    ) {
-      console.log("📧 Email failed but account was created");
+    if (error.response) {
+      console.log("Email failed but account was created");
       return res.status(201).json({
         message:
           "Account created! But verification email failed. Please use 'Resend Verification' later.",
@@ -226,7 +205,7 @@ module.exports.verifyEmail = async (req, res) => {
       success: true,
     });
   } catch (error) {
-    console.error("❌ Verify email error:", error);
+    console.error(" Verify email error:", error);
     res.status(500).json({ message: "Server error", success: false });
   }
 };
@@ -283,7 +262,7 @@ module.exports.Login = async (req, res) => {
       token,
     });
   } catch (error) {
-    console.error("❌ Login error:", error);
+    console.error("Login error:", error);
     res.status(500).json({ message: "Server error", success: false });
   }
 };
@@ -301,18 +280,18 @@ module.exports.Logout = (req, res) => {
       success: true,
     });
   } catch (error) {
-    console.error("❌ Logout error:", error);
+    console.error("Logout error:", error);
     res.status(500).json({ message: "Server error", success: false });
   }
 };
 
-// Forget Password logic with SendGrid
+// Forget Password logic with SendGrid Web API
 module.exports.ForgetPassword = async (req, res) => {
   const { email } = req.body;
 
   try {
-    console.log("🔐 Forgot password request for:", email);
-    console.log("🔑 SENDGRID_API_KEY present:", !!process.env.SENDGRID_API_KEY);
+    console.log(" Forgot password request for:", email);
+    console.log(" SENDGRID_API_KEY present:", !!process.env.SENDGRID_API_KEY);
 
     if (!email) {
       return res.status(400).json({
@@ -323,7 +302,7 @@ module.exports.ForgetPassword = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      console.log("👤 User not found, but returning success for security");
+      console.log(" User not found, but returning success for security");
       return res.status(200).json({
         message:
           "If an account with that email exists, a reset link has been sent.",
@@ -347,33 +326,31 @@ module.exports.ForgetPassword = async (req, res) => {
     const frontendURL = process.env.FRONTEND_URL || "http://localhost:5173";
     const resetURL = `${frontendURL}/reset-password/${resetToken}`;
 
-    console.log("📧 Setting up password reset email...");
+    console.log(" Setting up password reset email with SendGrid Web API...");
 
-    const mailOptions = {
-      from: process.env.EMAIL_FROM || "flowtrade181@gmail.com",
-      to: user.email,
-      subject: "Password Reset Request - Flow Trade",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #f9f9f9;">
-          <h2 style="color: #333; text-align: center;">Password Reset</h2>
-          <p style="font-size: 16px; color: #555;">Hello ${user.username},</p>
-          <p style="font-size: 16px; color: #555;">You requested a password reset for your Flow Trade account.</p>
-          <div style="text-align: center; margin: 25px 0;">
-            <a href="${resetURL}" style="display: inline-block; padding: 14px 30px; font-size: 16px; color: white; background-color: #007BFF; text-decoration: none; border-radius: 8px; font-weight: bold;">Reset Password</a>
-          </div>
-          <p style="font-size: 14px; color: #888; text-align: center;">Or copy and paste this link:</p>
-          <p style="font-size: 12px; color: #666; background: #f0f0f0; padding: 12px; border-radius: 5px; word-break: break-all; text-align: center;">${resetURL}</p>
-          <p style="font-size: 14px; color: #888; text-align: center;">This link expires in 1 hour.</p>
-          <p style="font-size: 14px; color: #888; text-align: center;">If you didn't request this, please ignore this email.</p>
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #f9f9f9;">
+        <h2 style="color: #333; text-align: center;">Password Reset</h2>
+        <p style="font-size: 16px; color: #555;">Hello ${user.username},</p>
+        <p style="font-size: 16px; color: #555;">You requested a password reset for your Flow Trade account.</p>
+        <div style="text-align: center; margin: 25px 0;">
+          <a href="${resetURL}" style="display: inline-block; padding: 14px 30px; font-size: 16px; color: white; background-color: #007BFF; text-decoration: none; border-radius: 8px; font-weight: bold;">Reset Password</a>
         </div>
-      `,
-    };
+        <p style="font-size: 14px; color: #888; text-align: center;">Or copy and paste this link:</p>
+        <p style="font-size: 12px; color: #666; background: #f0f0f0; padding: 12px; border-radius: 5px; word-break: break-all; text-align: center;">${resetURL}</p>
+        <p style="font-size: 14px; color: #888; text-align: center;">This link expires in 1 hour.</p>
+        <p style="font-size: 14px; color: #888; text-align: center;">If you didn't request this, please ignore this email.</p>
+      </div>
+    `;
 
-    console.log("🔄 Sending password reset email with retry logic...");
-    const emailResult = await sendEmailWithRetry(mailOptions, 2);
+    const emailResult = await sendEmailWithSendGrid(
+      user.email,
+      "Password Reset Request - Flow Trade",
+      emailHtml
+    );
 
     if (!emailResult.success) {
-      console.log("⚠️ SendGrid email failed but user was updated");
+      console.log(" SendGrid email failed but user was updated");
       return res.status(200).json({
         message:
           "Password reset requested. If you don't receive an email, please try again later.",
@@ -382,22 +359,18 @@ module.exports.ForgetPassword = async (req, res) => {
       });
     }
 
-    console.log("✅ Password reset email sent successfully via SendGrid");
+    console.log(" Password reset email sent successfully via SendGrid Web API");
 
     res.status(200).json({
       message: "Password reset link sent to your email",
       success: true,
     });
   } catch (error) {
-    console.error("❌ FORGOT PASSWORD ERROR:", error.message);
+    console.error(" FORGOT PASSWORD ERROR:", error.message);
 
     // If email fails, still return success but log the error
-    if (
-      error.message.includes("email") ||
-      error.code === "ETIMEDOUT" ||
-      error.code === "EAUTH"
-    ) {
-      console.log("📧 SendGrid email failed but user was updated");
+    if (error.response) {
+      console.log(" SendGrid email failed but user was updated");
       return res.status(200).json({
         message:
           "Password reset requested. If you don't receive an email, please try again later.",
@@ -458,12 +431,12 @@ module.exports.ResetPassword = async (req, res) => {
       success: true,
     });
   } catch (error) {
-    console.error("❌ Reset password error:", error);
+    console.error(" Reset password error:", error);
     res.status(500).json({ message: "Server error", success: false });
   }
 };
 
-// Resend verification email with SendGrid
+// Resend verification email with SendGrid Web API
 module.exports.resendVerification = async (req, res) => {
   try {
     const { email } = req.body;
@@ -513,36 +486,35 @@ module.exports.resendVerification = async (req, res) => {
 
     await user.save();
 
-    // Send verification email with SendGrid
+    // Send verification email with SendGrid Web API
     const frontendURL = process.env.FRONTEND_URL || "http://localhost:5173";
     const verificationURL = `${frontendURL}/verify-email/${verificationToken}`;
 
-    console.log("🔄 Resending verification email...");
+    console.log(" Resending verification email via SendGrid Web API...");
 
-    const mailOptions = {
-      from: process.env.EMAIL_FROM || "flowtrade181@gmail.com",
-      to: email,
-      subject: "Verify your Flow Trade email - New Link",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #f9f9f9;">
-          <h2 style="color: #333; text-align: center;">New Verification Link</h2>
-          <p style="font-size: 16px; color: #555;">Hello ${user.username},</p>
-          <p style="font-size: 16px; color: #555;">You requested a new verification link for your Flow Trade account.</p>
-          <div style="text-align: center; margin: 25px 0;">
-            <a href="${verificationURL}" style="display: inline-block; padding: 14px 30px; font-size: 16px; color: white; background-color: #007BFF; text-decoration: none; border-radius: 8px; font-weight: bold;">Verify Email Address</a>
-          </div>
-          <p style="font-size: 14px; color: #888; text-align: center;">Or copy and paste this link in your browser:</p>
-          <p style="font-size: 12px; color: #666; background: #f0f0f0; padding: 12px; border-radius: 5px; word-break: break-all; text-align: center;">${verificationURL}</p>
-          <p style="font-size: 14px; color: #888; text-align: center;">This link will expire in 1 hour.</p>
-          <p style="font-size: 14px; color: #888; text-align: center;">If you did not request this, please ignore this email.</p>
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #f9f9f9;">
+        <h2 style="color: #333; text-align: center;">New Verification Link</h2>
+        <p style="font-size: 16px; color: #555;">Hello ${user.username},</p>
+        <p style="font-size: 16px; color: #555;">You requested a new verification link for your Flow Trade account.</p>
+        <div style="text-align: center; margin: 25px 0;">
+          <a href="${verificationURL}" style="display: inline-block; padding: 14px 30px; font-size: 16px; color: white; background-color: #007BFF; text-decoration: none; border-radius: 8px; font-weight: bold;">Verify Email Address</a>
         </div>
-      `,
-    };
+        <p style="font-size: 14px; color: #888; text-align: center;">Or copy and paste this link in your browser:</p>
+        <p style="font-size: 12px; color: #666; background: #f0f0f0; padding: 12px; border-radius: 5px; word-break: break-all; text-align: center;">${verificationURL}</p>
+        <p style="font-size: 14px; color: #888; text-align: center;">This link will expire in 1 hour.</p>
+        <p style="font-size: 14px; color: #888; text-align: center;">If you did not request this, please ignore this email.</p>
+      </div>
+    `;
 
-    const emailResult = await sendEmailWithRetry(mailOptions, 2);
+    const emailResult = await sendEmailWithSendGrid(
+      email,
+      "Verify your Flow Trade email - New Link",
+      emailHtml
+    );
 
     if (!emailResult.success) {
-      console.log("⚠️ Resend verification email failed");
+      console.log(" Resend verification email failed");
       return res.status(200).json({
         message:
           "Verification requested but email failed. Please try again later.",
@@ -551,21 +523,17 @@ module.exports.resendVerification = async (req, res) => {
       });
     }
 
-    console.log("✅ Resent verification email successfully via SendGrid");
+    console.log("Resent verification email successfully via SendGrid Web API");
 
     res.status(200).json({
       message: "Verification email sent successfully! Please check your email.",
       success: true,
     });
   } catch (error) {
-    console.error("❌ Resend verification error:", error);
+    console.error("Resend verification error:", error);
 
     // If email fails, still return success
-    if (
-      error.message.includes("email") ||
-      error.code === "ETIMEDOUT" ||
-      error.code === "EAUTH"
-    ) {
+    if (error.response) {
       return res.status(200).json({
         message:
           "Verification requested but email failed. Please try again later.",
@@ -581,39 +549,59 @@ module.exports.resendVerification = async (req, res) => {
   }
 };
 
-// Test endpoint to verify email configuration
+// Test endpoint to verify SendGrid Web API configuration
 module.exports.testEmailConfig = async (req, res) => {
   try {
-    console.log("🧪 Testing email configuration...");
-    console.log("SENDGRID_API_KEY length:", process.env.SENDGRID_API_KEY?.length);
+    console.log(" Testing SendGrid Web API configuration...");
+    console.log(
+      "SENDGRID_API_KEY length:",
+      process.env.SENDGRID_API_KEY?.length
+    );
     console.log("EMAIL_FROM:", process.env.EMAIL_FROM);
     console.log("FRONTEND_URL:", process.env.FRONTEND_URL);
-    
-    const transporter = createTransporter();
-    await transporter.verify();
-    
-    console.log("✅ Email configuration test passed");
-    res.json({ 
-      success: true, 
-      message: "Email configuration is working perfectly!",
+
+    // Test by sending a simple email
+    const testEmailHtml = `
+      <div style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2> SendGrid Web API Test</h2>
+        <p>This is a test email from your Render deployment.</p>
+        <p>If you received this, your SendGrid configuration is working perfectly!</p>
+        <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+      </div>
+    `;
+
+    const emailResult = await sendEmailWithSendGrid(
+      process.env.EMAIL_FROM, // Send to yourself for testing
+      "SendGrid Web API Test - Flow Trade",
+      testEmailHtml
+    );
+
+    if (!emailResult.success) {
+      throw new Error(emailResult.error.message);
+    }
+
+    console.log(" SendGrid Web API test passed");
+    res.json({
+      success: true,
+      message: "SendGrid Web API is working perfectly! Test email sent.",
       config: {
         hasApiKey: !!process.env.SENDGRID_API_KEY,
         apiKeyLength: process.env.SENDGRID_API_KEY?.length,
         fromEmail: process.env.EMAIL_FROM,
-        frontendUrl: process.env.FRONTEND_URL
-      }
+        frontendUrl: process.env.FRONTEND_URL,
+      },
     });
   } catch (error) {
-    console.error("❌ Email config test failed:", error);
-    res.status(500).json({ 
-      success: false, 
+    console.error(" SendGrid Web API test failed:", error);
+    res.status(500).json({
+      success: false,
       error: error.message,
       config: {
         hasApiKey: !!process.env.SENDGRID_API_KEY,
         apiKeyLength: process.env.SENDGRID_API_KEY?.length,
         fromEmail: process.env.EMAIL_FROM,
-        frontendUrl: process.env.FRONTEND_URL
-      }
+        frontendUrl: process.env.FRONTEND_URL,
+      },
     });
   }
 };
