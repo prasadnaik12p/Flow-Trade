@@ -537,7 +537,7 @@ function Stocks() {
       >
         <div className="max-w-7xl mx-auto flex flex-col h-[90%]">
           <div className="flex justify-between items-center mb-6">
-            <motion.h2 
+            <motion.h2
               initial={{ opacity: 0, y: -30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, ease: "easeOut" }}
@@ -556,7 +556,7 @@ function Stocks() {
               Refresh Prices
             </motion.button>
           </div>
-          
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -564,7 +564,7 @@ function Stocks() {
             className="flex-1 bg-white/90 rounded-2xl shadow-2xl overflow-hidden border border-blue-200"
           >
             <div className="relative w-full overflow-x-auto">
-              <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-5rem)]">
+              <div className="overflow-x-auto overflow-y-auto max-h-[calc(90vh-5rem)]">
                 <table className="w-full divide-y divide-blue-200">
                   <thead className="bg-gradient-to-b from-cyan-900 via-blue-800 to-blue-700 sticky top-0 z-10">
                     <tr>
@@ -591,7 +591,7 @@ function Stocks() {
                       </th>
                     </tr>
                   </thead>
-                  <motion.tbody 
+                  <motion.tbody
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
@@ -602,10 +602,10 @@ function Stocks() {
                         key={stock.symbol}
                         variants={tableRowVariants}
                         custom={index}
-                        whileHover={{ 
+                        whileHover={{
                           scale: 1.02,
                           backgroundColor: "rgba(59, 130, 246, 0.05)",
-                          transition: { duration: 0.2 }
+                          transition: { duration: 0.2 },
                         }}
                         className="hover:bg-blue-50 transition-colors duration-200"
                       >
@@ -622,7 +622,7 @@ function Stocks() {
                           {stock.exchange}
                         </td>
                         <td className="px-3 sm:px-6 py-3 whitespace-nowrap text-xs sm:text-sm text-gray-600 hidden lg:table-cell">
-                          <motion.span 
+                          <motion.span
                             whileHover={{ scale: 1.05 }}
                             className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 border border-green-200"
                           >

@@ -155,14 +155,18 @@ const StripePaymentModal = ({ isOpen, onClose, onSuccess }) => {
           </motion.div>
         )}
 
-        {step === 'amount' && (
+        {step === "amount" && (
           <>
             <div className="text-center mb-4 sm:mb-6">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                 <CreditCard className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">Add Virtual Funds</h3>
-              <p className="text-gray-600 text-sm sm:text-base">Add money to your trading account</p>
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">
+                Add Virtual Funds
+              </h3>
+              <p className="text-gray-600 text-sm sm:text-base">
+                Add money to your trading account
+              </p>
             </div>
 
             <div className="mb-4 sm:mb-6">
@@ -177,17 +181,21 @@ const StripePaymentModal = ({ isOpen, onClose, onSuccess }) => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => {
-                      setAmount(option.value)
-                      setPaymentError('')
+                      setAmount(option.value);
+                      setPaymentError("");
                     }}
                     className={`p-2 sm:p-3 rounded-lg sm:rounded-xl border-2 text-left transition-all ${
                       amount === option.value
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
-                    <div className="font-semibold text-gray-900 text-sm sm:text-base">{option.label}</div>
-                    <div className="text-xs text-gray-500 mt-0.5 sm:mt-1">{option.description}</div>
+                    <div className="font-semibold text-gray-900 text-sm sm:text-base">
+                      {option.label}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5 sm:mt-1">
+                      {option.description}
+                    </div>
                   </motion.button>
                 ))}
               </div>
@@ -206,22 +214,28 @@ const StripePaymentModal = ({ isOpen, onClose, onSuccess }) => {
                   step="100"
                   value={amount}
                   onChange={(e) => {
-                    const value = Math.max(100, Math.min(100000, Number(e.target.value)))
-                    setAmount(value)
-                    setPaymentError('')
+                    const value = Math.max(
+                      100,
+                      Math.min(100000, Number(e.target.value))
+                    );
+                    setAmount(value);
+                    setPaymentError("");
                   }}
                   className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                   placeholder="Enter amount"
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1 sm:mt-2">Min: ₹100 | Max: ₹1,00,000</p>
+              <p className="text-xs text-gray-500 mt-1 sm:mt-2">
+                Min: ₹100 | Max: ₹1,00,000
+              </p>
             </div>
 
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 sm:p-3 mb-4">
               <div className="flex items-center">
                 <Zap className="h-4 w-4 text-yellow-600 mr-2" />
                 <span className="text-yellow-700 text-xs sm:text-sm">
-                  <strong>Development Mode:</strong> Using quick add. No real payment required.
+                  <strong>Virtual Mode:</strong> Using quick add. No real
+                  payment required.
                 </span>
               </div>
             </div>
@@ -240,7 +254,9 @@ const StripePaymentModal = ({ isOpen, onClose, onSuccess }) => {
                 whileHover={!loading ? { scale: 1.02 } : {}}
                 whileTap={!loading ? { scale: 0.98 } : {}}
                 onClick={handleAddFundsClick}
-                disabled={loading || amount < 100 || amount > 100000 || paymentProcessed}
+                disabled={
+                  loading || amount < 100 || amount > 100000 || paymentProcessed
+                }
                 className="flex-1 py-2 sm:py-3 px-4 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-lg hover:from-blue-600 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium flex items-center justify-center space-x-2 text-sm sm:text-base"
               >
                 {loading ? (
@@ -249,7 +265,9 @@ const StripePaymentModal = ({ isOpen, onClose, onSuccess }) => {
                   <CreditCard className="h-4 w-4" />
                 )}
                 <span>
-                  {loading ? 'Processing...' : `Add ₹${amount.toLocaleString()}`}
+                  {loading
+                    ? "Processing..."
+                    : `Add ₹${amount.toLocaleString()}`}
                 </span>
               </motion.button>
             </div>
@@ -261,20 +279,26 @@ const StripePaymentModal = ({ isOpen, onClose, onSuccess }) => {
           </>
         )}
 
-        {step === 'processing' && (
+        {step === "processing" && (
           <div className="text-center py-6 sm:py-8">
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
               className="w-12 h-12 sm:w-16 sm:h-16 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto mb-3 sm:mb-4"
             />
-            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">Processing Payment</h3>
-            <p className="text-gray-600 text-sm sm:text-base">Please wait while we add funds to your account...</p>
-            <p className="text-sm text-gray-500 mt-1 sm:mt-2">Amount: ₹{amount.toLocaleString()}</p>
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">
+              Processing Payment
+            </h3>
+            <p className="text-gray-600 text-sm sm:text-base">
+              Please wait while we add funds to your account...
+            </p>
+            <p className="text-sm text-gray-500 mt-1 sm:mt-2">
+              Amount: ₹{amount.toLocaleString()}
+            </p>
           </div>
         )}
 
-        {step === 'success' && (
+        {step === "success" && (
           <div className="text-center py-6 sm:py-8">
             <motion.div
               initial={{ scale: 0 }}
@@ -283,8 +307,12 @@ const StripePaymentModal = ({ isOpen, onClose, onSuccess }) => {
             >
               <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
             </motion.div>
-            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">Funds Added Successfully!</h3>
-            <p className="text-gray-600 text-sm sm:text-base mb-3 sm:mb-4">₹{amount.toLocaleString()} added to your account</p>
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">
+              Funds Added Successfully!
+            </h3>
+            <p className="text-gray-600 text-sm sm:text-base mb-3 sm:mb-4">
+              ₹{amount.toLocaleString()} added to your account
+            </p>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -297,7 +325,7 @@ const StripePaymentModal = ({ isOpen, onClose, onSuccess }) => {
         )}
       </motion.div>
     </motion.div>
-  )
+  );
 }
 
 // Transaction Item Component
