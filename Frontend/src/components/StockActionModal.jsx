@@ -172,12 +172,16 @@ const StockActionModal = ({ isOpen, onClose, stock, currentPrice }) => {
     };
 
     try {
-      const response = await axios.post("https://flow-trade.onrender.com/dashboard/UserStock/buy", payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/dashboard/UserStock/buy`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
-      });
+      );
 
       console.log("Bought successfully:", response.data);
       showAlert('success', "Stock purchased successfully!");

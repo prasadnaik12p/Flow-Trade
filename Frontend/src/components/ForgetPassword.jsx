@@ -17,12 +17,12 @@ export default function ForgotPassword() {
 
     try {
       const res = await axios.post(
-        "https://flow-trade.onrender.com/auth/forget-password", 
-        { email }, 
+        `${import.meta.env.VITE_API_URL}/auth/forget-password`,
+        { email },
         {
           headers: {
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+          },
         }
       );
 

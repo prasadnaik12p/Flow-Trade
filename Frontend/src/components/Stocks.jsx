@@ -151,12 +151,12 @@ const fetchStockPriceFromBackend = async (symbol) => {
   try {
     const token = localStorage.getItem("token");
     const response = await axios.get(
-      `https://flow-trade.onrender.com/dashboard/stock-price/${symbol}`,
+      `${import.meta.env.VITE_API_URL}/dashboard/stock-price/${symbol}`,
       {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          "Content-Type": "application/json",
+        },
       }
     );
     
@@ -182,13 +182,13 @@ const fetchMultipleStockPrices = async (symbols) => {
   try {
     const token = localStorage.getItem("token");
     const response = await axios.post(
-      `https://flow-trade.onrender.com/dashboard/stock-prices`,
+      `${import.meta.env.VITE_API_URL}/dashboard/stock-prices`,
       { symbols },
       {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          "Content-Type": "application/json",
+        },
       }
     );
 
@@ -270,12 +270,15 @@ function Stocks() {
         }
 
         // Fetch stocks data
-        const res = await axios.get("https://flow-trade.onrender.com/dashboard/stocks", {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/dashboard/stocks`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           }
-        });
+        );
         
         setAllStocks(res.data);
         
@@ -404,32 +407,36 @@ function Stocks() {
       return;
     }
 
-    axios.post(
-      "https://flow-trade.onrender.com/dashboard/Watchlists/add",
-      { symbol: stock.symbol },
-      { 
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        } 
-      }
-    )
-    .then(res => {
-      showAlert('success', res.data.message || 'Added to watchlist successfully!');
-    })
-    .catch(err => {
-      console.error("Watchlist error:", err);
-      const msg = err.response?.data?.message || "Error adding to watchlist";
-      
-      if (err.response?.status === 401) {
-        showAlert('error', 'Session expired. Please login again.');
-        setTimeout(() => {
-          window.location.href = '/auth/login';
-        }, 2000);
-      } else {
-        showAlert('error', msg);
-      }
-    });
+    axios
+      .post(
+        `${import.meta.env.VITE_API_URL}/dashboard/Watchlists/add`,
+        { symbol: stock.symbol },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      )
+      .then((res) => {
+        showAlert(
+          "success",
+          res.data.message || "Added to watchlist successfully!"
+        );
+      })
+      .catch((err) => {
+        console.error("Watchlist error:", err);
+        const msg = err.response?.data?.message || "Error adding to watchlist";
+
+        if (err.response?.status === 401) {
+          showAlert("error", "Session expired. Please login again.");
+          setTimeout(() => {
+            window.location.href = "/auth/login";
+          }, 2000);
+        } else {
+          showAlert("error", msg);
+        }
+      });
   };
 
   const handleModalClose = (orderData) => {

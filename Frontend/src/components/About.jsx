@@ -13,6 +13,7 @@ import {
 } from "react-icons/fa";
 
 function About() {
+
   const [openFaq, setOpenFaq] = useState(null);
 
   const toggleFaq = (index) => {

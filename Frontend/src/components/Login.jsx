@@ -27,7 +27,7 @@ export default function Login({ onLoginSuccess }) {
 
     try {
       const res = await axios.post(
-        "https://flow-trade.onrender.com/auth/login",
+        `${import.meta.env.VITE_API_URL}/auth/login`,
         formData,
         {
           headers: {

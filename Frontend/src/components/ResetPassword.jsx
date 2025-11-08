@@ -48,12 +48,12 @@ export default function ResetPassword() {
 
     try {
       const res = await axios.post(
-        `https://flow-trade.onrender.com/auth/reset-password/${token}`, 
-        formData, 
+        `${import.meta.env.VITE_API_URL}/auth/reset-password/${token}`,
+        formData,
         {
           headers: {
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+          },
         }
       );
 

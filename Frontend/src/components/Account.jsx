@@ -25,107 +25,108 @@ import {
 
 // Stripe Payment Modal Component
 const StripePaymentModal = ({ isOpen, onClose, onSuccess }) => {
-  const [amount, setAmount] = useState(1000)
-  const [loading, setLoading] = useState(false)
-  const [step, setStep] = useState('amount')
-  const [paymentError, setPaymentError] = useState('')
-  const [paymentProcessed, setPaymentProcessed] = useState(false)
+  const [amount, setAmount] = useState(1000);
+  const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState("amount");
+  const [paymentError, setPaymentError] = useState("");
+  const [paymentProcessed, setPaymentProcessed] = useState(false);
 
   const amountOptions = [
-    { value: 1000, label: '₹1,000', description: 'Quick Start' },
-    { value: 2500, label: '₹2,500', description: 'Basic Trading' },
-    { value: 5000, label: '₹5,000', description: 'Standard Pack' },
-    { value: 10000, label: '₹10,000', description: 'Pro Trading' },
-    { value: 25000, label: '₹25,000', description: 'Premium' },
-    { value: 50000, label: '₹50,000', description: 'Expert' }
-  ]
+    { value: 1000, label: "₹1,000", description: "Quick Start" },
+    { value: 2500, label: "₹2,500", description: "Basic Trading" },
+    { value: 5000, label: "₹5,000", description: "Standard Pack" },
+    { value: 10000, label: "₹10,000", description: "Pro Trading" },
+    { value: 25000, label: "₹25,000", description: "Premium" },
+    { value: 50000, label: "₹50,000", description: "Expert" },
+  ];
 
   const handleQuickAdd = async (amount) => {
     if (paymentProcessed) {
       console.log("Payment already processed, skipping duplicate call");
-      return
+      return;
     }
 
     try {
-      setLoading(true)
-      setPaymentError('')
-      setPaymentProcessed(true)
-      const token = localStorage.getItem('token')
-      
+      setLoading(true);
+      setPaymentError("");
+      setPaymentProcessed(true);
+      const token = localStorage.getItem("token");
+
       console.log(` Quick adding ₹${amount}...`);
-      
-      const response = await axios.post('https://flow-trade.onrender.com/api/payments/quick-add', 
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/payments/quick-add`,
         { amount },
-        { 
-          headers: { 
+        {
+          headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+          },
         }
-      )
+      );
 
       console.log(" Quick add response:", response.data);
 
       if (response.data.success) {
-        setStep('success')
+        setStep("success");
         setTimeout(() => {
-          onSuccess(amount)
-          onClose()
-          setStep('amount')
-          setPaymentProcessed(false)
-        }, 2000)
+          onSuccess(amount);
+          onClose();
+          setStep("amount");
+          setPaymentProcessed(false);
+        }, 2000);
       } else {
-        throw new Error(response.data.message || 'Payment failed')
+        throw new Error(response.data.message || "Payment failed");
       }
     } catch (error) {
       console.error(" Quick add error:", error);
-      setPaymentProcessed(false)
-      
-      let errorMessage = 'Payment failed. Please try again.'
-      
+      setPaymentProcessed(false);
+
+      let errorMessage = "Payment failed. Please try again.";
+
       if (error.response?.data?.message) {
-        errorMessage = error.response.data.message
+        errorMessage = error.response.data.message;
       } else if (error.response?.status === 400) {
-        errorMessage = 'Invalid amount or payment details.'
+        errorMessage = "Invalid amount or payment details.";
       } else if (error.response?.status === 500) {
-        errorMessage = 'Server error. Please try again later.'
+        errorMessage = "Server error. Please try again later.";
       } else if (error.message) {
-        errorMessage = error.message
+        errorMessage = error.message;
       }
-      
-      setPaymentError(errorMessage)
-      setStep('amount')
+
+      setPaymentError(errorMessage);
+      setStep("amount");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const resetModal = () => {
-    setStep('amount')
-    setPaymentError('')
-    setAmount(1000)
-    setPaymentProcessed(false)
-  }
+    setStep("amount");
+    setPaymentError("");
+    setAmount(1000);
+    setPaymentProcessed(false);
+  };
 
   const handleClose = () => {
-    resetModal()
-    onClose()
-  }
+    resetModal();
+    onClose();
+  };
 
   const handleAddFundsClick = async (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    
+    e.preventDefault();
+    e.stopPropagation();
+
     if (loading || paymentProcessed) {
       console.log("Payment already in progress, ignoring click");
-      return
+      return;
     }
 
     console.log("Starting payment process...");
-    await handleQuickAdd(amount)
-  }
+    await handleQuickAdd(amount);
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <motion.div
@@ -326,39 +327,51 @@ const StripePaymentModal = ({ isOpen, onClose, onSuccess }) => {
       </motion.div>
     </motion.div>
   );
-}
+};
 
 // Transaction Item Component
 const TransactionItem = ({ transaction }) => {
   const getTransactionIcon = (type) => {
     switch (type) {
-      case 'deposit':
-        return { icon: ArrowDownRight, color: 'text-green-600', bg: 'bg-green-100' }
-      case 'withdrawal':
-        return { icon: ArrowUpRight, color: 'text-red-600', bg: 'bg-red-100' }
-      case 'trade_buy':
-        return { icon: TrendingDown, color: 'text-blue-600', bg: 'bg-blue-100' }
-      case 'trade_sell':
-        return { icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-100' }
+      case "deposit":
+        return {
+          icon: ArrowDownRight,
+          color: "text-green-600",
+          bg: "bg-green-100",
+        };
+      case "withdrawal":
+        return { icon: ArrowUpRight, color: "text-red-600", bg: "bg-red-100" };
+      case "trade_buy":
+        return {
+          icon: TrendingDown,
+          color: "text-blue-600",
+          bg: "bg-blue-100",
+        };
+      case "trade_sell":
+        return {
+          icon: TrendingUp,
+          color: "text-purple-600",
+          bg: "bg-purple-100",
+        };
       default:
-        return { icon: History, color: 'text-gray-600', bg: 'bg-gray-100' }
+        return { icon: History, color: "text-gray-600", bg: "bg-gray-100" };
     }
-  }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'completed':
-        return 'text-green-600 bg-green-100'
-      case 'pending':
-        return 'text-yellow-600 bg-yellow-100'
-      case 'failed':
-        return 'text-red-600 bg-red-100'
+      case "completed":
+        return "text-green-600 bg-green-100";
+      case "pending":
+        return "text-yellow-600 bg-yellow-100";
+      case "failed":
+        return "text-red-600 bg-red-100";
       default:
-        return 'text-gray-600 bg-gray-100'
+        return "text-gray-600 bg-gray-100";
     }
-  }
+  };
 
-  const { icon: Icon, color, bg } = getTransactionIcon(transaction.type)
+  const { icon: Icon, color, bg } = getTransactionIcon(transaction.type);
 
   return (
     <motion.div
@@ -368,24 +381,29 @@ const TransactionItem = ({ transaction }) => {
       className="flex items-center justify-between p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl border border-gray-200 hover:shadow-md transition-all group"
     >
       <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
-        <motion.div 
+        <motion.div
           whileHover={{ scale: 1.1, rotate: 5 }}
           className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg ${bg} group-hover:scale-110 transition-transform`}
         >
           <Icon className={`h-3 w-3 sm:h-4 sm:w-4 ${color}`} />
         </motion.div>
-        
+
         <div className="flex-1 min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-0.5 sm:mb-1">
             <p className="font-semibold text-gray-900 text-xs sm:text-sm capitalize truncate">
-              {transaction.type.replace('_', ' ')}
+              {transaction.type.replace("_", " ")}
             </p>
-            <span className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}>
+            <span
+              className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-xs font-medium ${getStatusColor(
+                transaction.status
+              )}`}
+            >
               {transaction.status}
             </span>
           </div>
           <p className="text-gray-600 text-xs sm:text-sm truncate">
-            {transaction.description || `${transaction.type.replace('_', ' ')} transaction`}
+            {transaction.description ||
+              `${transaction.type.replace("_", " ")} transaction`}
           </p>
           {transaction.assetSymbol && (
             <p className="text-gray-500 text-xs mt-0.5 sm:mt-1">
@@ -396,35 +414,56 @@ const TransactionItem = ({ transaction }) => {
       </div>
 
       <div className="text-right flex-shrink-0 ml-2 sm:ml-4">
-        <p className={`font-bold text-xs sm:text-sm ${
-          transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'
-        }`}>
-          {transaction.amount >= 0 ? '+' : ''}₹{Math.abs(transaction.amount).toLocaleString()}
+        <p
+          className={`font-bold text-xs sm:text-sm ${
+            transaction.amount >= 0 ? "text-green-600" : "text-red-600"
+          }`}
+        >
+          {transaction.amount >= 0 ? "+" : ""}₹
+          {Math.abs(transaction.amount).toLocaleString()}
         </p>
         <p className="text-gray-500 text-xs mt-0.5 sm:mt-1">
-          {new Date(transaction.createdAt).toLocaleDateString('en-IN')}
+          {new Date(transaction.createdAt).toLocaleDateString("en-IN")}
         </p>
         <p className="text-gray-400 text-xs hidden sm:block">
-          {new Date(transaction.createdAt).toLocaleTimeString('en-IN', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
+          {new Date(transaction.createdAt).toLocaleTimeString("en-IN", {
+            hour: "2-digit",
+            minute: "2-digit",
           })}
         </p>
       </div>
     </motion.div>
-  )
-}
+  );
+};
 
 // Quick Action Card Component
-const QuickActionCard = ({ icon: Icon, title, description, onClick, color = 'blue' }) => {
+const QuickActionCard = ({
+  icon: Icon,
+  title,
+  description,
+  onClick,
+  color = "blue",
+}) => {
   const colorClasses = {
-    blue: { bg: 'bg-blue-100', hover: 'bg-blue-200', text: 'text-blue-600' },
-    purple: { bg: 'bg-purple-100', hover: 'bg-purple-200', text: 'text-purple-600' },
-    green: { bg: 'bg-green-100', hover: 'bg-green-200', text: 'text-green-600' },
-    orange: { bg: 'bg-orange-100', hover: 'bg-orange-200', text: 'text-orange-600' }
-  }
+    blue: { bg: "bg-blue-100", hover: "bg-blue-200", text: "text-blue-600" },
+    purple: {
+      bg: "bg-purple-100",
+      hover: "bg-purple-200",
+      text: "text-purple-600",
+    },
+    green: {
+      bg: "bg-green-100",
+      hover: "bg-green-200",
+      text: "text-green-600",
+    },
+    orange: {
+      bg: "bg-orange-100",
+      hover: "bg-orange-200",
+      text: "text-orange-600",
+    },
+  };
 
-  const colorClass = colorClasses[color] || colorClasses.blue
+  const colorClass = colorClasses[color] || colorClasses.blue;
 
   return (
     <motion.button
@@ -433,165 +472,187 @@ const QuickActionCard = ({ icon: Icon, title, description, onClick, color = 'blu
       onClick={onClick}
       className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-200 hover:shadow-md transition-all text-left group w-full"
     >
-      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-md sm:rounded-lg ${colorClass.bg} flex items-center justify-center mb-2 sm:mb-3 group-hover:${colorClass.hover} transition-colors`}>
+      <div
+        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-md sm:rounded-lg ${colorClass.bg} flex items-center justify-center mb-2 sm:mb-3 group-hover:${colorClass.hover} transition-colors`}
+      >
         <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${colorClass.text}`} />
       </div>
-      <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-0.5 sm:mb-1">{title}</h3>
+      <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-0.5 sm:mb-1">
+        {title}
+      </h3>
       <p className="text-gray-600 text-xs sm:text-sm">{description}</p>
     </motion.button>
-  )
-}
+  );
+};
 
 // Main Account Component
 export default function Account() {
-  const [balance, setBalance] = useState(null)
-  const [transactions, setTransactions] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [activeTab, setActiveTab] = useState('overview')
-  const [filter, setFilter] = useState('all')
-  const [exportLoading, setExportLoading] = useState(false)
+  const [balance, setBalance] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [filter, setFilter] = useState("all");
+  const [exportLoading, setExportLoading] = useState(false);
 
   useEffect(() => {
-    fetchAccountData()
-  }, [activeTab])
+    fetchAccountData();
+  }, [activeTab]);
 
   const fetchAccountData = async () => {
     try {
-      setLoading(true)
-      setError(null)
-      
-      const token = localStorage.getItem('token')
+      setLoading(true);
+      setError(null);
+
+      const token = localStorage.getItem("token");
       if (!token) {
-        setError('Please login to view account details')
-        setLoading(false)
-        return
+        setError("Please login to view account details");
+        setLoading(false);
+        return;
       }
 
-      console.log('🔍 Fetching account data...')
+      console.log("🔍 Fetching account data...");
 
       const [balanceRes, transactionsRes] = await Promise.all([
-        axios.get('https://flow-trade.onrender.com/api/payments/balance', {
-          headers: { Authorization: `Bearer ${token}` }
-        }).catch(error => {
-          console.error(" Balance API error:", error);
-          throw error
-        }),
-        axios.get('https://flow-trade.onrender.com/api/transactions', {
-          headers: { Authorization: `Bearer ${token}` }
-        }).catch(error => {
-          console.error("Transactions API error:", error);
-          throw error
-        })
-      ])
+        axios
+          .get(`${import.meta.env.VITE_API_URL}/api/payments/balance`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          .catch((error) => {
+            console.error(" Balance API error:", error);
+            throw error;
+          }),
+        axios
+          .get(`${import.meta.env.VITE_API_URL}/api/transactions`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          .catch((error) => {
+            console.error("Transactions API error:", error);
+            throw error;
+          }),
+      ]);
 
       console.log(" Balance response:", balanceRes.data);
       console.log(" Transactions response:", transactionsRes.data);
 
       if (balanceRes.data.success) {
-        setBalance(balanceRes.data)
+        setBalance(balanceRes.data);
       } else {
-        throw new Error(balanceRes.data.error || 'Failed to fetch balance')
+        throw new Error(balanceRes.data.error || "Failed to fetch balance");
       }
 
       if (transactionsRes.data.success) {
-        setTransactions(transactionsRes.data.transactions || [])
+        setTransactions(transactionsRes.data.transactions || []);
       } else {
-        throw new Error(transactionsRes.data.error || 'Failed to fetch transactions')
+        throw new Error(
+          transactionsRes.data.error || "Failed to fetch transactions"
+        );
       }
-
     } catch (error) {
       console.error(" Error fetching account data:", error);
-      
+
       if (error.response) {
-        console.error('Response status:', error.response.status)
-        console.error('Response data:', error.response.data)
-        
+        console.error("Response status:", error.response.status);
+        console.error("Response data:", error.response.data);
+
         if (error.response.status === 404) {
-          setError('Transactions endpoint not found. Check if backend routes are properly set up.')
+          setError(
+            "Transactions endpoint not found. Check if backend routes are properly set up."
+          );
         } else if (error.response.status === 500) {
-          setError('Server error: ' + (error.response.data?.error || 'Internal server error'))
+          setError(
+            "Server error: " +
+              (error.response.data?.error || "Internal server error")
+          );
         } else {
-          setError(`API Error: ${error.response.status} - ${error.response.data?.error || 'Unknown error'}`)
+          setError(
+            `API Error: ${error.response.status} - ${
+              error.response.data?.error || "Unknown error"
+            }`
+          );
         }
       } else if (error.request) {
-        console.error('No response received:', error.request)
-        setError('No response from server. Check if backend is running on port 3002.')
+        console.error("No response received:", error.request);
+        setError(
+          "No response from server. Check if backend is running on port 3002."
+        );
       } else {
-        setError(error.message || 'Failed to load account data')
+        setError(error.message || "Failed to load account data");
       }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleAddFunds = async (amount) => {
     try {
       console.log(` Refreshing balance after adding ₹${amount}...`);
-      await fetchAccountData()
+      await fetchAccountData();
     } catch (error) {
-      console.error('Error refreshing balance:', error)
+      console.error("Error refreshing balance:", error);
     }
-  }
+  };
 
   const exportToCSV = async () => {
     try {
-      setExportLoading(true)
-      const token = localStorage.getItem('token')
+      setExportLoading(true);
+      const token = localStorage.getItem("token");
       if (!token) {
-        alert('Please login to export data')
-        return
+        alert("Please login to export data");
+        return;
       }
 
       console.log(" Exporting transactions to CSV...");
 
-      const response = await axios.get('https://flow-trade.onrender.com/api/transactions/export/csv', {
-        headers: { 
-          Authorization: `Bearer ${token}` 
-        },
-        responseType: 'blob'
-      })
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/transactions/export/csv`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          responseType: "blob",
+        }
+      );
 
-      const blob = new Blob([response.data], { type: 'text/csv' })
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      
-      const date = new Date().toISOString().split('T')[0]
-      link.download = `transactions-${date}.csv`
-      
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
+      const blob = new Blob([response.data], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+
+      const date = new Date().toISOString().split("T")[0];
+      link.download = `transactions-${date}.csv`;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
 
       console.log(" CSV export completed");
-
     } catch (error) {
       console.error(" CSV export error:", error);
-      
+
       if (error.response?.status === 404) {
-        alert('Export feature not available yet. Please check back later.')
+        alert("Export feature not available yet. Please check back later.");
       } else if (error.response?.status === 500) {
-        alert('Server error during export. Please try again later.')
+        alert("Server error during export. Please try again later.");
       } else {
-        alert('Failed to export transactions. Please try again.')
+        alert("Failed to export transactions. Please try again.");
       }
     } finally {
-      setExportLoading(false)
+      setExportLoading(false);
     }
-  }
+  };
 
-  const filteredTransactions = transactions.filter(transaction => {
-    if (filter === 'all') return true
-    return transaction.type === filter
-  })
+  const filteredTransactions = transactions.filter((transaction) => {
+    if (filter === "all") return true;
+    return transaction.type === filter;
+  });
 
   const formatINR = (amount) => {
-    if (!amount) return '₹0'
-    return `₹${amount.toLocaleString('en-IN')}`
-  }
+    if (!amount) return "₹0";
+    return `₹${amount.toLocaleString("en-IN")}`;
+  };
 
   // Loading Component
   const LoadingSpinner = () => (
@@ -602,18 +663,24 @@ export default function Account() {
           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto mb-3 sm:mb-4"
         />
-        <p className="text-gray-600 text-sm sm:text-base">Loading account details...</p>
+        <p className="text-gray-600 text-sm sm:text-base">
+          Loading account details...
+        </p>
       </div>
     </div>
-  )
+  );
 
   // Error Component
   const ErrorDisplay = () => (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="text-center max-w-sm">
         <XCircle className="h-10 w-10 sm:h-12 sm:w-12 text-red-500 mx-auto mb-3 sm:mb-4" />
-        <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2">Unable to Load</h3>
-        <p className="text-gray-600 text-sm sm:text-base mb-3 sm:mb-4">{error}</p>
+        <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2">
+          Unable to Load
+        </h3>
+        <p className="text-gray-600 text-sm sm:text-base mb-3 sm:mb-4">
+          {error}
+        </p>
         <button
           onClick={fetchAccountData}
           className="bg-blue-500 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm sm:text-base"
@@ -622,14 +689,14 @@ export default function Account() {
         </button>
       </div>
     </div>
-  )
+  );
 
   if (loading) {
-    return <LoadingSpinner />
+    return <LoadingSpinner />;
   }
 
   if (error) {
-    return <ErrorDisplay />
+    return <ErrorDisplay />;
   }
 
   return (
@@ -641,16 +708,20 @@ export default function Account() {
     >
       <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6 lg:space-y-8">
         {/* Header */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4"
         >
           <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Account & Payments</h1>
-            <p className="text-gray-600 text-sm sm:text-base mt-0.5 sm:mt-1">Manage your virtual funds and transactions</p>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+              Account & Payments
+            </h1>
+            <p className="text-gray-600 text-sm sm:text-base mt-0.5 sm:mt-1">
+              Manage your virtual funds and transactions
+            </p>
           </div>
-          
+
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -671,17 +742,23 @@ export default function Account() {
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div className="flex-1">
-              <p className="text-blue-100 text-xs sm:text-sm mb-1 sm:mb-2">Available Balance</p>
+              <p className="text-blue-100 text-xs sm:text-sm mb-1 sm:mb-2">
+                Available Balance
+              </p>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2">
                 {formatINR(balance?.virtualBalance)}
               </h2>
               <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0 text-xs sm:text-sm text-blue-100">
-                <span>Total Deposited: {formatINR(balance?.totalDeposited)}</span>
+                <span>
+                  Total Deposited: {formatINR(balance?.totalDeposited)}
+                </span>
                 <span className="hidden sm:inline">•</span>
-                <span>Total Withdrawn: {formatINR(balance?.totalWithdrawn)}</span>
+                <span>
+                  Total Withdrawn: {formatINR(balance?.totalWithdrawn)}
+                </span>
               </div>
             </div>
-            
+
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -712,7 +789,7 @@ export default function Account() {
             icon={History}
             title="Transaction History"
             description="View all your transactions"
-            onClick={() => setActiveTab('transactions')}
+            onClick={() => setActiveTab("transactions")}
             color="purple"
           />
           <QuickActionCard
@@ -726,7 +803,7 @@ export default function Account() {
             icon={Shield}
             title="Security"
             description="Manage account security"
-            onClick={() => alert('Security settings coming soon!')}
+            onClick={() => alert("Security settings coming soon!")}
             color="orange"
           />
         </motion.div>
@@ -741,17 +818,17 @@ export default function Account() {
           <div className="border-b border-gray-200">
             <nav className="flex space-x-4 sm:space-x-8 px-4 sm:px-6 overflow-x-auto">
               {[
-                { id: 'overview', name: 'Overview', icon: Eye },
-                { id: 'transactions', name: 'Transactions', icon: History },
-                { id: 'reports', name: 'Reports', icon: Download }
+                { id: "overview", name: "Overview", icon: Eye },
+                { id: "transactions", name: "Transactions", icon: History },
+                { id: "reports", name: "Reports", icon: Download },
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center space-x-1 sm:space-x-2 transition-colors whitespace-nowrap ${
                     activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
                 >
                   <tab.icon className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -763,7 +840,7 @@ export default function Account() {
 
           {/* Tab Content */}
           <div className="p-4 sm:p-6">
-            {activeTab === 'overview' && (
+            {activeTab === "overview" && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -772,23 +849,29 @@ export default function Account() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                   <div className="bg-gray-50 rounded-lg sm:rounded-xl p-4 sm:p-6">
                     <Wallet className="h-6 w-6 sm:h-8 sm:w-8 text-gray-600 mb-2 sm:mb-3" />
-                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-1 sm:mb-2">Current Balance</h3>
+                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-1 sm:mb-2">
+                      Current Balance
+                    </h3>
                     <p className="text-xl sm:text-2xl font-bold text-gray-900">
                       {formatINR(balance?.virtualBalance)}
                     </p>
                   </div>
-                  
+
                   <div className="bg-green-50 rounded-lg sm:rounded-xl p-4 sm:p-6">
                     <ArrowDownRight className="h-6 w-6 sm:h-8 sm:w-8 text-green-600 mb-2 sm:mb-3" />
-                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-1 sm:mb-2">Total Deposited</h3>
+                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-1 sm:mb-2">
+                      Total Deposited
+                    </h3>
                     <p className="text-xl sm:text-2xl font-bold text-gray-900">
                       {formatINR(balance?.totalDeposited)}
                     </p>
                   </div>
-                  
+
                   <div className="bg-blue-50 rounded-lg sm:rounded-xl p-4 sm:p-6">
                     <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 mb-2 sm:mb-3" />
-                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-1 sm:mb-2">Total Transactions</h3>
+                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-1 sm:mb-2">
+                      Total Transactions
+                    </h3>
                     <p className="text-xl sm:text-2xl font-bold text-gray-900">
                       {transactions.length}
                     </p>
@@ -798,9 +881,11 @@ export default function Account() {
                 {/* Recent Transactions Preview */}
                 <div>
                   <div className="flex items-center justify-between mb-3 sm:mb-4">
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">Recent Transactions</h3>
-                    <button 
-                      onClick={() => setActiveTab('transactions')}
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                      Recent Transactions
+                    </h3>
+                    <button
+                      onClick={() => setActiveTab("transactions")}
                       className="text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-medium"
                     >
                       View All →
@@ -808,12 +893,17 @@ export default function Account() {
                   </div>
                   <div className="space-y-2 sm:space-y-3">
                     {transactions.slice(0, 3).map((transaction, index) => (
-                      <TransactionItem key={transaction._id || index} transaction={transaction} />
+                      <TransactionItem
+                        key={transaction._id || index}
+                        transaction={transaction}
+                      />
                     ))}
                     {transactions.length === 0 && (
                       <div className="text-center py-6 sm:py-8 text-gray-500">
                         <History className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-3 opacity-50" />
-                        <p className="text-sm sm:text-base">No transactions yet</p>
+                        <p className="text-sm sm:text-base">
+                          No transactions yet
+                        </p>
                       </div>
                     )}
                   </div>
@@ -821,7 +911,7 @@ export default function Account() {
               </motion.div>
             )}
 
-            {activeTab === 'transactions' && (
+            {activeTab === "transactions" && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -830,21 +920,27 @@ export default function Account() {
                 {/* Filters */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                   <div className="flex items-center space-x-1 sm:space-x-2 overflow-x-auto pb-1">
-                    {['all', 'deposit', 'withdrawal', 'trade_buy', 'trade_sell'].map((filterType) => (
+                    {[
+                      "all",
+                      "deposit",
+                      "withdrawal",
+                      "trade_buy",
+                      "trade_sell",
+                    ].map((filterType) => (
                       <button
                         key={filterType}
                         onClick={() => setFilter(filterType)}
                         className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-medium capitalize whitespace-nowrap ${
                           filter === filterType
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            ? "bg-blue-500 text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                       >
-                        {filterType.replace('_', ' ')}
+                        {filterType.replace("_", " ")}
                       </button>
                     ))}
                   </div>
-                  
+
                   <div className="flex items-center space-x-2 sm:space-x-3">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
@@ -858,7 +954,9 @@ export default function Account() {
                       ) : (
                         <Download className="h-3 w-3 sm:h-4 sm:w-4" />
                       )}
-                      <span>{exportLoading ? 'Exporting...' : 'Export CSV'}</span>
+                      <span>
+                        {exportLoading ? "Exporting..." : "Export CSV"}
+                      </span>
                     </motion.button>
                   </div>
                 </div>
@@ -867,9 +965,9 @@ export default function Account() {
                 <div className="space-y-2 sm:space-y-3">
                   <AnimatePresence>
                     {filteredTransactions.map((transaction, index) => (
-                      <TransactionItem 
-                        key={transaction._id || index} 
-                        transaction={transaction} 
+                      <TransactionItem
+                        key={transaction._id || index}
+                        transaction={transaction}
                       />
                     ))}
                   </AnimatePresence>
@@ -881,16 +979,20 @@ export default function Account() {
                       className="text-center py-8 sm:py-12"
                     >
                       <History className="h-12 w-12 sm:h-16 sm:w-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 sm:mb-2">No transactions found</h3>
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 sm:mb-2">
+                        No transactions found
+                      </h3>
                       <p className="text-gray-600 text-sm sm:text-base mb-3 sm:mb-4">
-                        {filter === 'all' 
-                          ? "You haven't made any transactions yet." 
-                          : `No ${filter.replace('_', ' ')} transactions found.`
-                        }
+                        {filter === "all"
+                          ? "You haven't made any transactions yet."
+                          : `No ${filter.replace(
+                              "_",
+                              " "
+                            )} transactions found.`}
                       </p>
-                      {filter !== 'all' && (
+                      {filter !== "all" && (
                         <button
-                          onClick={() => setFilter('all')}
+                          onClick={() => setFilter("all")}
                           className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base"
                         >
                           View all transactions
@@ -902,7 +1004,7 @@ export default function Account() {
               </motion.div>
             )}
 
-            {activeTab === 'reports' && (
+            {activeTab === "reports" && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -920,8 +1022,12 @@ export default function Account() {
                         <Download className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Export Transactions</h3>
-                        <p className="text-gray-600 text-xs sm:text-sm">Download your transaction history</p>
+                        <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
+                          Export Transactions
+                        </h3>
+                        <p className="text-gray-600 text-xs sm:text-sm">
+                          Download your transaction history
+                        </p>
                       </div>
                     </div>
                     <motion.button
@@ -936,7 +1042,11 @@ export default function Account() {
                       ) : (
                         <Download className="h-3 w-3 sm:h-4 sm:w-4" />
                       )}
-                      <span>{exportLoading ? 'Generating Report...' : 'Download CSV Report'}</span>
+                      <span>
+                        {exportLoading
+                          ? "Generating Report..."
+                          : "Download CSV Report"}
+                      </span>
                     </motion.button>
                     <p className="text-gray-500 text-xs mt-2 sm:mt-3 text-center">
                       {transactions.length} transactions available for export
@@ -955,25 +1065,39 @@ export default function Account() {
                         <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Transaction Statistics</h3>
-                        <p className="text-gray-600 text-xs sm:text-sm">View detailed analytics</p>
+                        <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
+                          Transaction Statistics
+                        </h3>
+                        <p className="text-gray-600 text-xs sm:text-sm">
+                          View detailed analytics
+                        </p>
                       </div>
                     </div>
                     <div className="space-y-1.5 sm:space-y-2">
                       <div className="flex justify-between text-xs sm:text-sm">
-                        <span className="text-gray-600">Total Transactions:</span>
-                        <span className="font-semibold">{transactions.length}</span>
+                        <span className="text-gray-600">
+                          Total Transactions:
+                        </span>
+                        <span className="font-semibold">
+                          {transactions.length}
+                        </span>
                       </div>
                       <div className="flex justify-between text-xs sm:text-sm">
                         <span className="text-gray-600">Deposits:</span>
                         <span className="font-semibold text-green-600">
-                          {transactions.filter(t => t.type === 'deposit').length}
+                          {
+                            transactions.filter((t) => t.type === "deposit")
+                              .length
+                          }
                         </span>
                       </div>
                       <div className="flex justify-between text-xs sm:text-sm">
                         <span className="text-gray-600">Trades:</span>
                         <span className="font-semibold text-blue-600">
-                          {transactions.filter(t => t.type.includes('trade')).length}
+                          {
+                            transactions.filter((t) => t.type.includes("trade"))
+                              .length
+                          }
                         </span>
                       </div>
                     </div>
@@ -996,5 +1120,5 @@ export default function Account() {
         )}
       </AnimatePresence>
     </motion.div>
-  )
+  );
 }

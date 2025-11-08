@@ -1,24 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Package, 
-  Search, 
-  Filter, 
-  Download, 
-  Eye, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Package,
+  Search,
+  Filter,
+  Download,
+  Eye,
+  Clock,
+  CheckCircle,
+  XCircle,
   AlertCircle,
   ChevronDown,
   ChevronUp,
   Calendar,
   DollarSign,
+  IndianRupee,
   TrendingUp,
   TrendingDown,
   RefreshCw,
-  MoreHorizontal
-} from 'lucide-react';
+  MoreHorizontal,
+} from "lucide-react";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -72,13 +73,16 @@ const Orders = () => {
       setIsRefreshing(true);
       
       const token = localStorage.getItem('token');
-      const response = await fetch('https://flow-trade.onrender.com/dashboard/Orders/', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/dashboard/Orders/`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -201,7 +205,7 @@ const Orders = () => {
   };
 
   const formatCurrency = (amount) => {
-    if (!amount) return '$0.00';
+    if (!amount) return "0.00";
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -375,15 +379,17 @@ const Orders = () => {
     >
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
           className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6"
         >
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Order History</h1>
-            <motion.p 
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+              Order History
+            </h1>
+            <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
@@ -405,7 +411,9 @@ const Orders = () => {
               disabled={isRefreshing}
               className="bg-white border border-gray-300 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2 text-sm disabled:opacity-50"
             >
-              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+              />
               <span className="hidden sm:inline">Refresh</span>
             </motion.button>
             <motion.button
@@ -423,10 +431,30 @@ const Orders = () => {
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {[
-            { label: 'Total Orders', value: totalOrders, icon: Package, color: 'blue' },
-            { label: 'Accepted', value: acceptedOrders, icon: CheckCircle, color: 'green' },
-            { label: 'Buy Orders', value: buyOrders, icon: TrendingUp, color: 'green' },
-            { label: 'Total Value', value: formatCurrency(totalValue), icon: DollarSign, color: 'purple' }
+            {
+              label: "Total Orders",
+              value: totalOrders,
+              icon: Package,
+              color: "blue",
+            },
+            {
+              label: "Accepted",
+              value: acceptedOrders,
+              icon: CheckCircle,
+              color: "green",
+            },
+            {
+              label: "Buy Orders",
+              value: buyOrders,
+              icon: TrendingUp,
+              color: "green",
+            },
+            {
+              label: "Total Value",
+              value: formatCurrency(totalValue),
+              icon: IndianRupee,
+              color: "purple",
+            },
           ].map((stat, index) => (
             <motion.div
               key={stat.label}
@@ -437,8 +465,12 @@ const Orders = () => {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">{stat.label}</p>
-                  <p className="text-lg sm:text-xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">
+                    {stat.label}
+                  </p>
+                  <p className="text-lg sm:text-xl font-bold text-gray-900 mt-1">
+                    {stat.value}
+                  </p>
                 </div>
                 <div className={`p-2 bg-${stat.color}-100 rounded-lg`}>
                   <stat.icon className={`h-5 w-5 text-${stat.color}-600`} />
@@ -507,9 +539,12 @@ const Orders = () => {
           {/* Table Header */}
           <div className="px-4 py-3 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900">Recent Orders</h3>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                Recent Orders
+              </h3>
               <div className="text-xs sm:text-sm text-gray-500">
-                Showing {Math.min(currentOrders.length, itemsPerPage)} of {filteredAndSortedOrders.length} orders
+                Showing {Math.min(currentOrders.length, itemsPerPage)} of{" "}
+                {filteredAndSortedOrders.length} orders
               </div>
             </div>
           </div>
@@ -567,41 +602,64 @@ const Orders = () => {
                         className="hover:bg-gray-50"
                       >
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="text-sm font-mono text-gray-900" title={order._id}>
+                          <div
+                            className="text-sm font-mono text-gray-900"
+                            title={order._id}
+                          >
                             {formatShortId(order._id)}
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="text-sm font-medium text-gray-900">{order.symbol}</div>
-                          <div className="text-xs text-gray-500">{order.name}</div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {order.symbol}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {order.name}
+                          </div>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${orderTypes[order.type]?.color || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                              orderTypes[order.type]?.color ||
+                              "bg-gray-100 text-gray-800 border-gray-200"
+                            }`}
+                          >
                             {getTypeIcon(order.type)}
                             <span className="ml-1">{order.BSstatus}</span>
                           </span>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{order.quantity}</div>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            ₹{(order.price)}
+                          <div className="text-sm text-gray-900">
+                            {order.quantity}
                           </div>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${orderStatuses[order.status]?.color || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
+                          <div className="text-sm font-medium text-gray-900">
+                            ₹{order.price}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                              orderStatuses[order.status]?.color ||
+                              "bg-gray-100 text-gray-800 border-gray-200"
+                            }`}
+                          >
                             {getStatusIcon(order.status)}
-                            <span className="ml-1 capitalize">{order.status}</span>
+                            <span className="ml-1 capitalize">
+                              {order.status}
+                            </span>
                           </span>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">
-                            ₹{(order.totalAmount)}
+                            ₹{order.totalAmount}
                           </div>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">{order.mode}</div>
+                          <div className="text-sm text-gray-500">
+                            {order.mode}
+                          </div>
                         </td>
                       </motion.tr>
                     ))}
@@ -619,19 +677,22 @@ const Orders = () => {
               className="text-center py-12"
             >
               <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No orders found</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No orders found
+              </h3>
               <p className="text-gray-500 mb-4">
-                {searchTerm || statusFilter !== 'all' || typeFilter !== 'all' 
-                  ? 'Try adjusting your search or filters'
-                  : 'No orders have been placed yet'
-                }
+                {searchTerm || statusFilter !== "all" || typeFilter !== "all"
+                  ? "Try adjusting your search or filters"
+                  : "No orders have been placed yet"}
               </p>
-              {(searchTerm || statusFilter !== 'all' || typeFilter !== 'all') && (
+              {(searchTerm ||
+                statusFilter !== "all" ||
+                typeFilter !== "all") && (
                 <button
                   onClick={() => {
-                    setSearchTerm('');
-                    setStatusFilter('all');
-                    setTypeFilter('all');
+                    setSearchTerm("");
+                    setStatusFilter("all");
+                    setTypeFilter("all");
                   }}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
                 >
@@ -650,14 +711,18 @@ const Orders = () => {
                 </div>
                 <div className="flex space-x-2">
                   <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
                     disabled={currentPage === 1}
                     className="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >
                     Previous
                   </button>
                   <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
                     disabled={currentPage === totalPages}
                     className="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >

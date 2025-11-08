@@ -68,26 +68,31 @@ const fetchPositions = async () => {
     setLoading(true);
     setError(null);
     setIsRefreshing(true);
-    
-    const token = localStorage.getItem('token');
-    
+
+    const token = localStorage.getItem("token");
+
     // Use the CORRECT endpoint - your existing positions endpoint
     const timestamp = Date.now();
-    const response = await axios.get(`https://flow-trade.onrender.com/dashboard/UserStock/Positions/?t=${timestamp}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await axios.get(
+      `${
+        import.meta.env.VITE_API_URL
+      }/dashboard/UserStock/Positions/?t=${timestamp}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
     console.log(" API Response received:", response.data);
-    
+
     if (response.data && response.data.success && response.data.data) {
       const apiPositions = response.data.data;
       console.log(` Processing ${apiPositions.length} positions from API`);
-      
+
       // SIMPLE MAPPING
-      const mappedPositions = apiPositions.map(position => {
+      const mappedPositions = apiPositions.map((position) => {
         const quantity = position.quantity || 0;
         const price = position.price || 0;
         const avgPrice = position.avgPrice || price;
@@ -102,33 +107,32 @@ const fetchPositions = async () => {
         return {
           _id: position._id,
           stockId: position.stockId?._id || position.stockId,
-          symbol: position.symbol || 'N/A',
-          name: position.name || 'Unknown Stock',
+          symbol: position.symbol || "N/A",
+          name: position.name || "Unknown Stock",
           quantity: quantity,
           avgPrice: avgPrice,
           currentPrice: currentPrice,
           marketValue: marketValue,
           profitLoss: profitLoss,
-          profitLossPercent: totalInvestment > 0 ? (profitLoss / totalInvestment * 100) : 0,
-          status: position.status || 'open',
+          profitLossPercent:
+            totalInvestment > 0 ? (profitLoss / totalInvestment) * 100 : 0,
+          status: position.status || "open",
           date: position.date || new Date(),
-          BSstatus: 'BUY',
-          currentStatus: profitLoss >= 0 ? 'Profit' : 'Loss',
-          originalData: position
+          BSstatus: "BUY",
+          currentStatus: profitLoss >= 0 ? "Profit" : "Loss",
+          originalData: position,
         };
       });
 
       console.log(" Final mapped positions:", mappedPositions);
       setPositions(mappedPositions);
-
     } else {
       console.log(" No valid positions data in response");
       setPositions([]);
-      setError('No positions data found');
+      setError("No positions data found");
     }
-
   } catch (error) {
-    console.error(' Fetch positions error:', error);
+    console.error(" Fetch positions error:", error);
     setError(`Failed to load positions: ${error.message}`);
     setPositions([]);
   } finally {
@@ -138,28 +142,31 @@ const fetchPositions = async () => {
   }
 };
 
-  // Debug function to check current positions
-  const debugQuantity = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get('https://flow-trade.onrender.com/dashboard/Positions/', {
+// Debug function to check current positions
+const debugQuantity = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(
+      `${import.meta.env.VITE_API_URL}/dashboard/Positions/`,
+      {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-      });
-      
-      console.log(' DEBUG - Current positions from API:', response.data.data);
-      
-      if (response.data.data && response.data.data.length > 0) {
-        response.data.data.forEach(pos => {
-          console.log(`${pos.symbol}: Qty=${pos.quantity}, Status=${pos.status}`);
-        });
       }
-    } catch (error) {
-      console.error('Debug error:', error);
+    );
+
+    console.log(" DEBUG - Current positions from API:", response.data.data);
+
+    if (response.data.data && response.data.data.length > 0) {
+      response.data.data.forEach((pos) => {
+        console.log(`${pos.symbol}: Qty=${pos.quantity}, Status=${pos.status}`);
+      });
     }
-  };
+  } catch (error) {
+    console.error("Debug error:", error);
+  }
+};
 
   // Sell Position Function
   const handleSellClick = (position) => {
@@ -200,12 +207,16 @@ const fetchPositions = async () => {
 
       console.log(" Sending sell order:", sellOrder);
 
-      const response = await axios.post('https://flow-trade.onrender.com/dashboard/UserStock/sell', sellOrder, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/dashboard/UserStock/sell`,
+        sellOrder,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       console.log(" Sell order successful:", response.data);
       

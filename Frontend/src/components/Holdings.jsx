@@ -34,40 +34,45 @@ const Holdings = () => {
   const fetchHoldings = async () => {
     try {
       setLoading(true);
-      setError('');
+      setError("");
       setIsRefreshing(true);
-      
-      const token = localStorage.getItem('token');
-      
+
+      const token = localStorage.getItem("token");
+
       if (!token) {
-        setError('Authentication required. Please login again.');
+        setError("Authentication required. Please login again.");
         return;
       }
 
-      const response = await axios.get('https://flow-trade.onrender.com/dashboard/allHoldings', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/dashboard/allHoldings`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
-      });
+      );
 
       const data = response.data;
-      
+
       if (data.success) {
         setHoldings(data.data || []);
         calculatePortfolioStats(data.data || []);
       } else {
-        throw new Error(data.error || 'Failed to fetch holdings');
+        throw new Error(data.error || "Failed to fetch holdings");
       }
     } catch (err) {
-      console.error('Error fetching holdings:', err);
-      
+      console.error("Error fetching holdings:", err);
+
       if (err.response) {
-        setError(err.response.data?.error || `Server error: ${err.response.status}`);
+        setError(
+          err.response.data?.error || `Server error: ${err.response.status}`
+        );
       } else if (err.request) {
-        setError('Network error: Unable to connect to server');
+        setError("Network error: Unable to connect to server");
       } else {
-        setError(err.message || 'Failed to fetch holdings');
+        setError(err.message || "Failed to fetch holdings");
       }
     } finally {
       setLoading(false);
@@ -82,59 +87,75 @@ const Holdings = () => {
     setShowSellModal(true);
   };
 
-const executeSell = async () => {
-  if (!sellingPosition || !sellQuantity) return;
+  const executeSell = async () => {
+    if (!sellingPosition || !sellQuantity) return;
 
-  try {
-    const token = localStorage.getItem('token');
-    const quantity = parseInt(sellQuantity);
-    
-    if (quantity <= 0 || quantity > sellingPosition.quantity) {
-      setError(`Invalid quantity. Maximum available: ${sellingPosition.quantity}`);
-      return;
+    try {
+      const token = localStorage.getItem("token");
+      const quantity = parseInt(sellQuantity);
+
+      if (quantity <= 0 || quantity > sellingPosition.quantity) {
+        setError(
+          `Invalid quantity. Maximum available: ${sellingPosition.quantity}`
+        );
+        return;
+      }
+
+      const currentPrice =
+        sellingPosition.stockId?.currentPrice || sellingPosition.price;
+      const totalPriceValue = currentPrice * quantity;
+
+      // 🔹 CORRECTED: Include ALL required fields from backend
+      const sellOrder = {
+        stockId: sellingPosition._id, // The holding ID
+        symbol: sellingPosition.stockId?.symbol || sellingPosition.symbol, // Symbol
+        name: sellingPosition.stockId?.name || sellingPosition.name, // Stock name
+        qty: quantity, // Quantity to sell
+        price: currentPrice, // Current market price
+        totalPrice: totalPriceValue, // Total value of the sell order
+        mode: "MARKET", // Order type
+        limitPrice: currentPrice, // For MARKET orders, same as current price
+      };
+
+      console.log("📤 Sending sell order:", sellOrder);
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/dashboard/UserStock/sell`,
+        sellOrder,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("✅ Sell order successful:", response.data);
+
+      // Success - refresh holdings
+      setShowSellModal(false);
+      setSellingPosition(null);
+      setSellQuantity("");
+      fetchHoldings();
+
+      // Show success message
+      setError(
+        `Successfully sold ${quantity} shares of ${
+          sellingPosition.stockId?.symbol || sellingPosition.symbol
+        }`
+      );
+      setTimeout(() => setError(""), 3000);
+    } catch (error) {
+      console.error(" Error selling position:", error);
+      setError(
+        `Failed to sell position: ${
+          error.response?.data?.error ||
+          error.response?.data?.message ||
+          error.message
+        }`
+      );
     }
-
-    const currentPrice = sellingPosition.stockId?.currentPrice || sellingPosition.price;
-    const totalPriceValue = currentPrice * quantity;
-
-    // 🔹 CORRECTED: Include ALL required fields from backend
-    const sellOrder = {
-      stockId: sellingPosition._id, // The holding ID
-      symbol: sellingPosition.stockId?.symbol || sellingPosition.symbol, // Symbol
-      name: sellingPosition.stockId?.name || sellingPosition.name, // Stock name
-      qty: quantity, // Quantity to sell
-      price: currentPrice, // Current market price
-      totalPrice: totalPriceValue, // Total value of the sell order
-      mode: "MARKET", // Order type
-      limitPrice: currentPrice // For MARKET orders, same as current price
-    };
-
-    console.log("📤 Sending sell order:", sellOrder);
-
-    const response = await axios.post('https://flow-trade.onrender.com/dashboard/UserStock/sell', sellOrder, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    console.log("✅ Sell order successful:", response.data);
-    
-    // Success - refresh holdings
-    setShowSellModal(false);
-    setSellingPosition(null);
-    setSellQuantity('');
-    fetchHoldings();
-    
-    // Show success message
-    setError(`Successfully sold ${quantity} shares of ${sellingPosition.stockId?.symbol || sellingPosition.symbol}`);
-    setTimeout(() => setError(''), 3000);
-
-  } catch (error) {
-    console.error(' Error selling position:', error);
-    setError(`Failed to sell position: ${error.response?.data?.error || error.response?.data?.message || error.message}`);
-  }
-};
+  };
 
   const calculatePortfolioStats = (holdingsData) => {
     let totalValue = 0;

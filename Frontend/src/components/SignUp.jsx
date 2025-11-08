@@ -36,12 +36,12 @@ export default function Signup({ onSignupSuccess }) {
 
     try {
       const res = await axios.post(
-        "https://flow-trade.onrender.com/auth/signup", 
-        formData, 
+        `${import.meta.env.VITE_API_URL}/auth/signup`,
+        formData,
         {
           headers: {
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+          },
         }
       );
 

@@ -37,12 +37,15 @@ const Wishlist = () => {
   const fetchWatchlists = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('https://flow-trade.onrender.com/dashboard/Watchlists', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/dashboard/Watchlists`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
-      });
+      );
       
       setWatchlists(response.data);
     } catch (error) {
@@ -54,12 +57,15 @@ const Wishlist = () => {
   const fetchAvailableStocks = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('https://flow-trade.onrender.com/dashboard/stocks', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/dashboard/stocks`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
-      });
+      );
       setAvailableStocks(response.data.slice(0, 10));
     } catch (error) {
       console.error('Error fetching stocks:', error);
@@ -98,13 +104,13 @@ const Wishlist = () => {
       // Try batch API first
       try {
         const batchResponse = await axios.post(
-          'https://flow-trade.onrender.com/dashboard/stock-prices',
+          `${import.meta.env.VITE_API_URL}/dashboard/stock-prices`,
           { symbols: allSymbols },
           {
             headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           }
         );
 
@@ -141,12 +147,12 @@ const Wishlist = () => {
       for (const symbol of remainingSymbols) {
         try {
           const response = await axios.get(
-            `https://flow-trade.onrender.com/dashboard/stock-price/${symbol}`,
+            `${import.meta.env.VITE_API_URL}/dashboard/stock-price/${symbol}`,
             {
               headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
             }
           );
 
@@ -216,13 +222,14 @@ const Wishlist = () => {
     setAddingItem(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('https://flow-trade.onrender.com/dashboard/Watchlists/add', 
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/dashboard/Watchlists/add`,
         { symbol: stock.symbol },
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
       );
 
@@ -241,13 +248,14 @@ const Wishlist = () => {
     setRemovingItem(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('https://flow-trade.onrender.com/dashboard/Watchlists/remove', 
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/dashboard/Watchlists/remove`,
         { symbol: watchlistItem.stockId.symbol },
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
       );
 
@@ -267,12 +275,12 @@ const Wishlist = () => {
       // Fetch the latest price before opening modal
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `https://flow-trade.onrender.com/dashboard/stock-price/${stock.symbol}`,
+        `${import.meta.env.VITE_API_URL}/dashboard/stock-price/${stock.symbol}`,
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
       );
 

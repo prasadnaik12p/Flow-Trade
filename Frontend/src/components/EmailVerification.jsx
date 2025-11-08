@@ -15,7 +15,9 @@ export default function EmailVerification() {
         console.log(' Starting email verification...');
         console.log(' Token:', token);
         
-        const verificationURL = `https://flow-trade.onrender.com/auth/verify-email/${token}`;
+        const verificationURL = `${
+          import.meta.env.VITE_API_URL
+        }/auth/verify-email/${token}`;
         console.log(' URL:', verificationURL);
         
         const res = await axios.get(verificationURL, {

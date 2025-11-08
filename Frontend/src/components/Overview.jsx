@@ -158,19 +158,22 @@ export default function Overview() {
       }
 
       const [overviewRes, statsRes] = await Promise.all([
-        axios.get('https://flow-trade.onrender.com/dashboard/Overview', {
+        axios.get(`${import.meta.env.VITE_API_URL}/dashboard/Overview`, {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+          },
         }),
-        axios.get('https://flow-trade.onrender.com/dashboard/Overview/dashboard-stats', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
+        axios.get(
+          `${import.meta.env.VITE_API_URL}/dashboard/Overview/dashboard-stats`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           }
-        })
-      ])
+        ),
+      ]);
       
       if (overviewRes.data.success && statsRes.data.success) {
         setAccountOverview(overviewRes.data.data)

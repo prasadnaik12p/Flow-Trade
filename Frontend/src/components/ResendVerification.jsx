@@ -34,12 +34,12 @@ export default function ResendVerification() {
 
     try {
       const res = await axios.post(
-        "https://flow-trade.onrender.com/auth/resend-verification", 
-        { email }, 
+        `${import.meta.env.VITE_API_URL}/auth/resend-verification`,
+        { email },
         {
           headers: {
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+          },
         }
       );
 
